@@ -1,0 +1,49 @@
+[% INCLUDE 'doc-head-open.inc' %]
+ <title>Koha: Self Checkout & Check-in: Configuration</title>
+[% INCLUDE 'doc-head-close.inc' %]
+</head>
+<body>
+[% INCLUDE 'header.inc' %]
+[% INCLUDE 'cat-search.inc' %]
+
+<div id="breadcrumbs"><a href="/cgi-bin/koha/mainpage.pl">Home</a> &rsaquo; <a href="/cgi-bin/koha/plugins/plugins-home.pl">Plugins</a> &rsaquo; Self Checkout & Check-in &rsaquo; Configuration</div>
+
+<div id="doc3">
+    <!-- We can access our own plugins resource files using the PLUGIN_PATH variable. -->
+    <h3>Koha: Self Checkout & Check-in: Configuration</h3>
+
+    <!-- Notice our form here has no 'action', this is good, it means that our forms will always get passed back to 'plugins/run.pl'. You could hard code it instead if you prefer -->
+    <form method="get">
+        <!-- Always pass these two parameters so the plugin system knows what to execute! -->
+        <input type="hidden" name="class" value="[% CLASS %]"/>
+        <input type="hidden" name="method" value="[% METHOD %]"/>
+        <p>
+        <label for="scc_location">Self checkout & check-in location: </label>
+        <input name="scc_location" value="[% IF ( scc_location ) %][% scc_location %][% ELSE %]/custom/cgi-bin/koha/scc/scc.pl[% END %]" type="text" />
+        <p><strong>This location must be set in Apache2 /etc/apache2/sites-available/your-koha.conf OPAC section</strong></p>
+        <p><strong>ScriptAlias [% IF ( scc_location ) %][% scc_location %][% ELSE %]/custom/cgi-bin/koha/scc/scc.pl[% END %] "/var/lib/koha/your_koha_instance/plugins/Koha/Plugin/Fi/Hypernova/SelfCheckoutCheckin/opac/scc.pl"</strong></p>
+        </p>
+        <p>
+        <label for="scc_sci_username">Self check-in username or cardnumber: </label>
+        <input name="scc_sci_username" value="[% scc_sci_username %]" type="text" />
+        </p>
+        <p>
+        <label for="scc_sci_password">Self check-in password: </label>
+        <input name="scc_sci_password" value="[% scc_sci_password %]" type="password" />
+        </p>
+
+        <p>
+        <label for="ipallowed">IP addresses allowed: </label>
+        <input name="ipallowed" value="[% ipallowed %]" />
+        </p>
+
+        <p>Allow access to the self check from the above IP addresses. Leave blank if not used. Use ranges or simple IP addresses separated by spaces, like 192.168.1.1 192.168.0.0/24.</p>
+        <p>You probably want to see <a href="/cgi-bin/koha/admin/preferences.pl?tab=&op=search&searchfield=SelfCheckAllowByIPRanges">SelfCheckAllowByIPRanges</a> system preference, [% IF ( SelfCheckAllowByIPRanges ) %]currently having value <b>[% SelfCheckAllowByIPRanges %]</b>.[% ELSE %]although it currently has no value.[% END %] This preference is not respected by this module, but you might want to copy its value here.</p>
+        <p>
+        <input type="hidden" name="save" value="1" />
+
+        <input type="submit" value="Save configuration" />
+        </p>
+    </form>
+
+[% INCLUDE 'intranet-bottom.inc' %]
