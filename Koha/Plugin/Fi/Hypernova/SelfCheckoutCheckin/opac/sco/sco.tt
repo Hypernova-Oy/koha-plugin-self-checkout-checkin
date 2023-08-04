@@ -1,0 +1,82 @@
+[% USE raw %]
+[% USE Asset %]
+[% USE Koha %]
+[% USE KohaDates %]
+[% USE AudioAlerts %]
+[% USE To %]
+[% USE Price %]
+[% TRY %]
+    [% lang = "$plugin_dir/i18n/$lang_dialect"_".inc" %]
+    [% PROCESS "$lang" %]
+[% CATCH %]
+    [% TRY %]
+        [% lang = "$plugin_dir/i18n/$lang_all"_".inc" %]
+        [% PROCESS "$lang" %]
+    [% CATCH %]
+        [% PROCESS "$plugin_dir/i18n/default.inc" %]
+    [% END %]
+[% END %]
+[% INCLUDE 'doc-head-open.inc' %]
+<title>[% TOKENS.scc_title %] &rsaquo; [% IF ( LibraryNameTitle ) %][% LibraryNameTitle | html %][% ELSE %]Koha [% END %]</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Koha [% Version | html %]" /> <!-- leave this for stats -->
+[% IF ( Koha.Preference('OpacFavicon') ) %]
+<link rel="shortcut icon" href="[% Koha.Preference('OpacFavicon') | url %]" type="image/x-icon" />
+[% ELSE %]
+<link rel="shortcut icon" href="[% interface | html %]/[% theme | html %]/images/favicon.ico" type="image/x-icon" />
+[% END %]
+[% Asset.css("lib/font-awesome/css/font-awesome.min.css") | $raw %]
+[% IF ( bidi ) %]
+    [% Asset.css("css/sco-rtl.css") | $raw %]
+[% ELSE %]
+    [% Asset.css("css/sco.css") | $raw %]
+[% END %]
+[% IF ( Koha.Preference('OPACUserCSS') ) %]<style>[% Koha.Preference('OPACUserCSS') | $raw %]</style>[% END %]
+[% IF ( Koha.Preference('SCOUserCSS') ) %]<style>[% Koha.Preference('SCOUserCSS') | $raw %]</style>[% END %]
+<script>
+    var Koha = {};
+    function _(s) { return s } // dummy function for gettext
+</script>
+[% Asset.js('js/Gettext.js') | $raw %]
+[% Asset.js('js/i18n.js') | $raw %]
+<style type="text/css">
+h2.scc-button {
+    display:table;
+    border: solid 1px #000;
+    text-align:center;
+    vertical-align:middle;
+    height:50vh;
+    width:100%;
+}
+h2.scc-button.scc-checkout-button {
+    background:#e6ffb3;
+}
+h2.scc-button.scc-checkin-button {
+    background:#cceeff;
+}
+h2.scc-button a {
+    display:table-cell;
+    vertical-align:middle;
+    width:100%;
+    height:100%;
+    text-decoration:none;
+}
+</style>
+</head>
+<body id="scc_main" class="scc">
+[% INCLUDE 'masthead-sco.inc' %]
+<div class="main">
+    <div class="container-fluid">
+        <div class="row scc-main">
+            <div class="col">
+                <h2 class="scc-button scc-checkout-button"><a href="/cgi-bin/koha/sco/sco-main.pl">[% TOKENS.checkoutbutton %]</a></h2>
+            </div>
+            <div class="col">
+                <h2 class="scc-button scc-checkin-button"><a href="/api/v1/contrib/hypernova/redirect/checkin" id="start-checkin">[% TOKENS.checkinbutton %]</a></h2>
+            </div>
+        </div>
+    </div>
+</div> <!-- / .main -->
+[% INCLUDE 'opac-bottom.inc' %]
+[% BLOCK jsinclude %]
+[% END %]
