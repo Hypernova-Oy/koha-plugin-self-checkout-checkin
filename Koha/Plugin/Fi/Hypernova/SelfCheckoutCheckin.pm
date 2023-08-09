@@ -186,7 +186,7 @@ sub configure {
                 scc_location => $cgi->param('scc_location'),
                 scc_sci_username => $cgi->param('scc_sci_username'),
                 scc_sci_password => $cgi->param('scc_sci_password'),
-                ip_allowed => $cgi->param('ip_allowed'),
+                ipallowed => $cgi->param('ipallowed'),
             }
         );
         $self->go_home();

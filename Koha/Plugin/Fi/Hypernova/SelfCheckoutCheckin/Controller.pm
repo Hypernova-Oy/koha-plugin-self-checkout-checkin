@@ -98,6 +98,13 @@ sub redirect_checkin {
 
         my $scc_obj = Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin->new;
         my $cgi = CGI->new;
+        
+        my $ipallowed = $scc_obj->retrieve_data('ipallowed');
+        if ( $ipallowed && C4::Auth::in_iprange($ipallowed) ) {
+            print $c->redirect_to('/cgi-bin/koha/sci/sci-main.pl');
+            return;
+        }
+
         $cgi->param(userid => $scc_obj->retrieve_data('scc_sci_username'));
         $cgi->param(password => $scc_obj->retrieve_data('scc_sci_password'));
         my ($status, $cookie, $sessionid) = C4::Auth::check_api_auth(
