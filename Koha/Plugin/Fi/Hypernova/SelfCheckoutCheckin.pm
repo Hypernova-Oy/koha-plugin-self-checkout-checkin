@@ -23,14 +23,14 @@ use Mojo::JSON qw(decode_json);
 use YAML;
 use Try::Tiny;
 
-our $VERSION = "23.05.01.1";
+our $VERSION = "24.05.01";
 
 our $metadata = {
     name            => 'Self Checkout & Check-in without login',
     author          => 'Lari Taskula',
     date_authored   => '2023-08-04',
-    date_updated    => "2023-08-04",
-    minimum_version => '23.05.01.000',
+    date_updated    => "2024-08-19",
+    minimum_version => '24.05.01.000',
     maximum_version => undef,
     version         => $VERSION,
     description     => 'This plugin adds combined self checkout and check-in view to OPAC. Check-in in this plugin requires no login.',
