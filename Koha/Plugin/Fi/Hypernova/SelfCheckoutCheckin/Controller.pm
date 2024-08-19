@@ -105,8 +105,8 @@ sub redirect_checkin {
             return;
         }
 
-        $cgi->param(userid => $scc_obj->retrieve_data('scc_sci_username'));
-        $cgi->param(password => $scc_obj->retrieve_data('scc_sci_password'));
+        $cgi->param(login_userid => $scc_obj->retrieve_data('scc_sci_username'));
+        $cgi->param(login_password => $scc_obj->retrieve_data('scc_sci_password'));
         my ($status, $cookie, $sessionid) = C4::Auth::check_api_auth(
             $cgi,
             { self_check => "self_checkout_module" },
