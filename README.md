@@ -20,7 +20,7 @@ ScriptAlias /custom/cgi-bin/koha/scc/scc.pl "/var/lib/koha/your_koha_instance/pl
 ### SelfCheckInUserJS: Make SCI finish button navigate to start screen
 
 ```
-$("button#sci_finish_button").on('click', function(e) {
+$("#sci_finish_button").on('click', function(e) {
   window.location.href = SCC_SCRIPT_LOCATION;
   e.preventDefault();
 });
