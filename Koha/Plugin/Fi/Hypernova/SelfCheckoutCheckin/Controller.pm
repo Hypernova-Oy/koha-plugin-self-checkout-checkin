@@ -100,7 +100,8 @@ sub redirect_checkin {
         my $cgi = CGI->new;
         
         my $ipallowed = $scc_obj->retrieve_data('ipallowed');
-        if ( $ipallowed && C4::Auth::in_iprange($ipallowed) ) {
+        if ( $ipallowed && !C4::Auth::in_iprange($ipallowed) ) {
+            $c->app->log->warn('User (' . $ENV{'REMOTE_ADDR'} . ') not allowed to access SCI');
             print $c->redirect_to('/cgi-bin/koha/sci/sci-main.pl');
             return;
         }
