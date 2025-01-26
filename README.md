@@ -1,4 +1,29 @@
-# Koha plugin - Self Checkout & Check-in without login
+# Koha plugin - Self Checkout & Check-in combined
+
+Provides access to both self checkout and check-in from a single screen.
+
+Allows you to configure a Koha account that is used for self check-ins.
+
+Allows you to restrict access to SCI by IP address.
+
+## Examples
+
+Self Checkout & Check-in main screen
+
+![Self Checkout & Check-in main](assets/images/scc.png)
+
+Self Checkout login
+
+![Self Checkout login](assets/images/sco_main.png)
+
+Self Check-in main screen
+
+![Self Check-in main](assets/images/sci_main.png)
+
+Video (in Finnish)
+
+![Self Checkout & Check-in video](assets/images/scc.webm)
+
 
 ## Install
 
