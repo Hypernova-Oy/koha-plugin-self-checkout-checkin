@@ -23,13 +23,13 @@ use Mojo::JSON qw(decode_json);
 use YAML;
 use Try::Tiny;
 
-our $VERSION = "24.05.01";
+our $VERSION = "24.11.01";
 
 our $metadata = {
     name            => 'Self Checkout & Check-in without login',
     author          => 'Lari Taskula',
     date_authored   => '2023-08-04',
-    date_updated    => "2024-08-19",
+    date_updated    => "2025-01-26",
     minimum_version => '24.05.01.000',
     maximum_version => undef,
     version         => $VERSION,
