@@ -36,9 +36,21 @@ Download the latest _.kpz_ file from the _Project / Releases_ page
 
 ## Set up Apache2 routing
 
-/etc/apache2/sites-available/your_koha_instance.conf
+Modify file `/etc/apache2/sites-available/your_koha_instance.conf`
 
-ScriptAlias /custom/cgi-bin/koha/scc/scc.pl "/var/lib/koha/your_koha_instance/plugins/Koha/Plugin/Fi/Hypernova/SelfCheckoutCheckin/opac/scc.pl"
+Add the following under OPAC's VirtualHost:
+
+`ScriptAlias /custom/cgi-bin/koha/scc/scc.pl "/var/lib/koha/your_koha_instance/plugins/Koha/Plugin/Fi/Hypernova/SelfCheckoutCheckin/opac/scc.pl"`
+
+Restart Apache2:
+
+`systemctl restart apache2`
+
+## Usage
+
+After installation and configuration, navigate to
+
+`https://yourkoha/custom/cgi-bin/koha/scc/scc.pl`
 
 ## Possibly useful system preferences
 
