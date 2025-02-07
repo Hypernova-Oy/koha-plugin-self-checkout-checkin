@@ -33,62 +33,11 @@ A class implementing the controller methods for checking in items
 
 =head2 Class methods
 
-=head3 checkin
+=head3 redirect_checkin
 
-Method that checks in items
+Authenticates the self-check-in user and redirects to sci-main.pl
 
 =cut
-
-sub checkin {
-    my $c = shift->openapi->valid_input or return;
-
-    return try {
-        my $barcode = $c->validation->param('barcode');
-
-        my $library_id = $c->validation->param('library_id') || 
-          C4::Context->userenv ? C4::Context->userenv->{'branch'} : undef;
-
-        my $item = Koha::Items->find({ barcode => $barcode });
-        unless ($item) {
-            return $c->render(
-                status  => 409,
-                openapi => {
-                    error      => 'Item not found'
-                }
-            );
-        }
-
-        my $checkout = Koha::Checkouts->find({ itemnumber => $item->itemnumber });
-        unless ( $checkout ) {
-            return $c->render(
-                status => 400,
-                openapi => { error => "Item not checked out" }
-            );
-        }
-        unless ( $library_id ) {
-           $library_id = $checkout->patron->branchcode;
-        }
-        my $library = Koha::Libraries->find( $library_id );
-
-        my ( $returned ) = C4::Circulation::AddReturn( $barcode, $library_id );
-
-        unless ( $returned ) {
-            return $c->render(
-                status => 403,
-                openapi => { error => "Checkin not allowed" }
-            );
-        }
-
-        $c->res->headers->location( $c->req->url->to_string );
-        return $c->render(
-            status  => 201,
-            openapi => $item->to_api
-        );
-    }
-    catch {
-        $c->unhandled_exception($_);
-    };
-}
 
 sub redirect_checkin {
     my $c = shift->openapi->valid_input or return;
