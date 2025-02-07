@@ -45,7 +45,9 @@ Modify file `/etc/apache2/sites-available/your_koha_instance.conf`
 
 Add the following under OPAC's VirtualHost:
 
-```ScriptAlias /custom/cgi-bin/koha/scc/scc.pl "/var/lib/koha/your_koha_instance/plugins/Koha/Plugin/Fi/Hypernova/SelfCheckoutCheckin/opac/scc.pl"```
+```
+ScriptAlias /custom/cgi-bin/koha/scc/scc.pl "/var/lib/koha/your_koha_instance/plugins/Koha/Plugin/Fi/Hypernova/SelfCheckoutCheckin/opac/scc.pl"
+```
 
 Restart Apache2:
 
