@@ -33,7 +33,7 @@ my $cgi = new CGI;
 
 my $pluginDir = dirname(abs_path($0));
 
-my $template_name = $pluginDir . '/sco/sco.tt';
+my $template_name = $pluginDir . '/scc/scc.tt';
 
 my $lang = C4::Languages::getlanguage($cgi) || 'en';
 my @lang_split = split /_|-/, $lang;
