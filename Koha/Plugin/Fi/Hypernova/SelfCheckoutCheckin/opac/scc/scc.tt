@@ -61,6 +61,12 @@ h2.scc-button a {
     height:100%;
     text-decoration:none;
 }
+h2.scc-button a.disabled {
+    background:#aaa !important;
+}
+h2.scc-button a.disabled {
+    color:#222 !important;
+}
 </style>
 </head>
 <body id="scc_main" class="scc">
@@ -69,7 +75,7 @@ h2.scc-button a {
     <div class="container-fluid">
         <div class="row scc-main">
             <div class="col">
-                <h2 class="scc-button scc-checkout-button"><a href="/cgi-bin/koha/sco/sco-main.pl">[% TOKENS.checkoutbutton %]</a></h2>
+                <h2 class="scc-button scc-checkout-button"><a href="/cgi-bin/koha/sco/sco-main.pl" id="start-checkout">[% TOKENS.checkoutbutton %]</a></h2>
             </div>
             <div class="col">
                 <h2 class="scc-button scc-checkin-button"><a href="/api/v1/contrib/hypernova/redirect/checkin" id="start-checkin">[% TOKENS.checkinbutton %]</a></h2>
@@ -79,4 +85,17 @@ h2.scc-button a {
 </div> <!-- / .main -->
 [% INCLUDE 'opac-bottom.inc' %]
 [% BLOCK jsinclude %]
+<script>
+$("a#start-checkout, a#start-checkin").click(function (event) {
+    if ($(this).hasClass("disabled")) {
+        event.preventDefault();
+        return;
+    }
+    $(this).addClass("disabled");
+    var button_el = this;
+    setTimeout(() => {
+        $(button_el).removeClass("disabled");
+    }, "10000");
+});
+</script>
 [% END %]
