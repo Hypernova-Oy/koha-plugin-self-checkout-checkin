@@ -183,10 +183,10 @@ sub configure {
     else {
         $self->store_data(
             {
-                scc_location => $cgi->param('scc_location'),
-                scc_sci_username => $cgi->param('scc_sci_username'),
-                scc_sci_password => $cgi->param('scc_sci_password'),
-                ipallowed => $cgi->param('ipallowed'),
+                scc_location => scalar $cgi->param('scc_location'),
+                scc_sci_username => scalar $cgi->param('scc_sci_username'),
+                scc_sci_password => scalar $cgi->param('scc_sci_password'),
+                ipallowed => scalar $cgi->param('ipallowed'),
             }
         );
         $self->go_home();
