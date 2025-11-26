@@ -193,6 +193,10 @@ sub configure {
     }
 }
 
+sub install {
+    return 1;
+}
+
 sub uninstall {}
 
 1;
