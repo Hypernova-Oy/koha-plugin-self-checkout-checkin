@@ -39,25 +39,11 @@ Download the latest _.kpz_ file from the _Project / Releases_ page
 1. Enable `SelfCheckInModule`
 2. Enable `AutoSelfCheckAllowed`, set `AutoSelfCheckID` and `AutoSelfCheckPass`
 
-## Set up Apache2 routing
-
-Modify file `/etc/apache2/sites-available/your_koha_instance.conf`
-
-Add the following under OPAC's VirtualHost:
-
-```
-ScriptAlias /custom/cgi-bin/koha/scc/scc.pl "/var/lib/koha/your_koha_instance/plugins/Koha/Plugin/Fi/Hypernova/SelfCheckoutCheckin/opac/scc.pl"
-```
-
-Restart Apache2:
-
-`systemctl restart apache2`
-
 ## Usage
 
 After installation and configuration, navigate to
 
-`https://yourkoha/custom/cgi-bin/koha/scc/scc.pl`
+`https://yourkoha/api/v1/contrib/hypernova/scc`
 
 ## Possibly useful system preferences
 

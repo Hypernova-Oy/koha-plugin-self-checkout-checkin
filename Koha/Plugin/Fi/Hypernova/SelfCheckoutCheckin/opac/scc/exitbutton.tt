@@ -2,15 +2,9 @@
 [% USE Asset %]
 [% USE Koha %]
 [% TRY %]
-    [% lang = "$plugin_dir/i18n/$lang_dialect"_".inc" %]
-    [% PROCESS "$lang" %]
+    [% PROCESS "$PLUGIN_DIR/i18n/${LANG}.inc" %]
 [% CATCH %]
-    [% TRY %]
-        [% lang = "$plugin_dir/i18n/$lang_all"_".inc" %]
-        [% PROCESS "$lang" %]
-    [% CATCH %]
-        [% PROCESS "$plugin_dir/i18n/default.inc" %]
-    [% END %]
+    [% PROCESS "$PLUGIN_DIR/i18n/default.inc" %]
 [% END %]
 <div class="container-fluid">
     <div class=\"row\">
@@ -39,6 +33,6 @@
                 color:#fff;
             }
         </style>
-        <h2 class="scc-exit-button"><a href="/custom/cgi-bin/koha/scc/scc.pl">[% TOKENS.scc_exit_button %]</a></h2>
+        <h2 class="scc-exit-button"><a href="/cgi-bin/koha/sco/sco-main.pl?op=logout">[% TOKENS.scc_exit_button %]</a></h2>
     </div>
 </div>

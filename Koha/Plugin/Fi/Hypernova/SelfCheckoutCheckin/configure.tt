@@ -18,12 +18,6 @@
         <input type="hidden" name="class" value="[% CLASS %]"/>
         <input type="hidden" name="method" value="[% METHOD %]"/>
         <p>
-        <label for="scc_location">Self checkout & check-in location: </label>
-        <input name="scc_location" value="[% IF ( scc_location ) %][% scc_location %][% ELSE %]/custom/cgi-bin/koha/scc/scc.pl[% END %]" type="text" />
-        <p><strong>This location must be set in Apache2 /etc/apache2/sites-available/your-koha.conf OPAC section</strong></p>
-        <p><strong>ScriptAlias [% IF ( scc_location ) %][% scc_location %][% ELSE %]/custom/cgi-bin/koha/scc/scc.pl[% END %] "/var/lib/koha/your_koha_instance/plugins/Koha/Plugin/Fi/Hypernova/SelfCheckoutCheckin/opac/scc.pl"</strong></p>
-        </p>
-        <p>
         <label for="scc_sci_username">Self check-in username or cardnumber: </label>
         <input name="scc_sci_username" value="[% scc_sci_username %]" type="text" />
         </p>

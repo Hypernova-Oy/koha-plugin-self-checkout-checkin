@@ -16,5 +16,23 @@
         }
       }
     }
+  },
+  "/scc": {
+    "get": {
+      "x-mojo-to": "Fi::Hypernova::SelfCheckoutCheckin::Controller#template",
+      "operationId": "scc",
+      "tags": ["scc"],
+      "produces": [
+        "text/html"
+      ],
+      "responses": {
+        "200": {
+          "description": "GUI"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
   }
 }
