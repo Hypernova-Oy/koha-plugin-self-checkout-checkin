@@ -82,8 +82,12 @@ sub template {
 
         my $scc_obj = Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin->new;
         my $cgi = CGI->new;
+        my $lang = $c->param('language') || $c->cookie('KohaOpacLanguage') || 'fi-FI';
+        my $memory_cache = Koha::Cache::Memory::Lite->get_instance();
+        my $cache_key    = "getlanguage";
+        $memory_cache->set_in_cache( $cache_key, $lang );
+        $cgi->param('language', $lang);
         $scc_obj->{'cgi'} = $cgi;
-
         my $ipallowed = $scc_obj->retrieve_data('ipallowed');
         if ( $ipallowed && !C4::Auth::in_iprange($ipallowed) ) {
             $c->app->log->warn('User (' . $ENV{'REMOTE_ADDR'} . ') not allowed to access SCC');
@@ -104,7 +108,7 @@ sub template {
             METHOD      => scalar $scc_obj->{'cgi'}->param('method'),
             PLUGIN_PATH => $scc_obj->get_plugin_http_path(),
             PLUGIN_DIR  => $scc_obj->bundle_path(),
-            LANG        => $c->cookie('KohaOpacLanguage') || 'fi-FI',
+            LANG        => $lang,
         );
 
         local *STDOUT;
@@ -119,6 +123,7 @@ sub template {
         }
         $c->res->parse($stdout);
         $c->cookie(CGISESSID => '', { path => "/" });
+        $c->cookie(KohaOpacLanguage => $lang, { path => "/" });
         return $c->render( text => $c->res->body );
     }
     catch {

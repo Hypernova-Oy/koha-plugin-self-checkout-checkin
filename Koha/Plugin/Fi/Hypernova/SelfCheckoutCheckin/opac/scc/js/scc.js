@@ -12,6 +12,14 @@ $(document).ready(function () {
         window.location.href = SCC_SCRIPT_LOCATION;
     }
 
+    if (new RegExp('(api/v1/contrib/hypernova/scc)$').exec(window.location.pathname) || new RegExp('(sco/sco-main\.pl)$').exec(window.location.pathname) || new RegExp('(sci/sci-main\.pl)$').exec(window.location.pathname)) {
+        $("a[href*='opac-changelanguage.pl']").each(function() {
+            let href = $(this).attr("href");
+            let new_href = href.replace('/cgi-bin/koha/opac-changelanguage.pl\?language', '/api/v1/contrib/hypernova/scc?language');
+            $(this).attr("href", new_href);
+        });
+    }
+    
     if (new RegExp('(sco/sco-main\.pl)$').exec(window.location.pathname) || new RegExp('(sci/sci-main\.pl)$').exec(window.location.pathname)) {
         if (typeof SCC_HOME_BUTTON_TEXT === "undefined") {
             SCC_HOME_BUTTON_TEXT = '<<';

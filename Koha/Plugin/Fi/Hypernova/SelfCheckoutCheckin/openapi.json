@@ -21,6 +21,15 @@
     "get": {
       "x-mojo-to": "Fi::Hypernova::SelfCheckoutCheckin::Controller#template",
       "operationId": "scc",
+      "parameters": [
+        {
+          "name": "language",
+          "in": "query",
+          "description": "Change language",
+          "required": false,
+          "type": "string"
+        }
+      ],
       "tags": ["scc"],
       "produces": [
         "text/html"
