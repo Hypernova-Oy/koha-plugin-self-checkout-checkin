@@ -104,7 +104,7 @@ sub template {
             METHOD      => scalar $scc_obj->{'cgi'}->param('method'),
             PLUGIN_PATH => $scc_obj->get_plugin_http_path(),
             PLUGIN_DIR  => $scc_obj->bundle_path(),
-            LANG        => C4::Languages::getlanguage( $scc_obj->{'cgi'} ) || 'fi-FI',
+            LANG        => $c->cookie('KohaOpacLanguage') || 'fi-FI',
         );
 
         local *STDOUT;
