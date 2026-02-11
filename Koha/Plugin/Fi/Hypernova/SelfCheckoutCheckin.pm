@@ -20,7 +20,6 @@ use Modern::Perl;
 use base qw(Koha::Plugins::Base);
 
 use Mojo::JSON qw(decode_json);
-use YAML;
 use Try::Tiny;
 
 our $VERSION = "24.11.02";
