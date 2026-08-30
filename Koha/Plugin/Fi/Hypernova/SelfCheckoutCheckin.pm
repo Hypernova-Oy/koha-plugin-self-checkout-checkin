@@ -78,12 +78,16 @@ sub configure {
     unless ( $cgi->param('save') ) {
         my $template = $self->get_template( { file => 'configure.tt' } );
 
+        my $opac_base_url = C4::Context->preference('OPACBaseURL') || '';
+        my $plugin_url = $opac_base_url . '/api/v1/contrib/' . $self->api_namespace . '/scc';
+
         ## Grab the values we already have for our settings, if any exist
         $template->param(
             SelfCheckAllowByIPRanges => C4::Context->preference('SelfCheckAllowByIPRanges'),
             ipallowed => $self->retrieve_data('ipallowed'),
             scc_sci_username => $self->retrieve_data('scc_sci_username'),
             scc_sci_password => $self->retrieve_data('scc_sci_password'),
+            plugin_opac_url => $plugin_url,
         );
 
         $self->output_html( $template->output() );

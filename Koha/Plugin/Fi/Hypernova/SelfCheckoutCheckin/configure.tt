@@ -38,6 +38,7 @@
 
         <input type="submit" value="Save configuration" />
         </p>
+        <p>OPAC URL to access this plugin: <a href="[% plugin_opac_url %]">[% plugin_opac_url %]</a></p>
     </form>
 
 [% INCLUDE 'intranet-bottom.inc' %]
