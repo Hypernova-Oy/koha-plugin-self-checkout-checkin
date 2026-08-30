@@ -18,6 +18,13 @@
         <input type="hidden" name="class" value="[% CLASS %]"/>
         <input type="hidden" name="method" value="[% METHOD %]"/>
         <p>
+        <label for="enable_virtual_keyboard">
+            <input name="enable_virtual_keyboard" value="1" type="checkbox" [% IF enable_virtual_keyboard %]checked="checked"[% END %] />
+            Enable virtual keyboard (KioskBoard)
+        </label>
+        </p>
+
+        <p>
         <label for="scc_sci_username">Self check-in username or cardnumber: </label>
         <input name="scc_sci_username" value="[% scc_sci_username %]" type="text" />
         </p>
@@ -33,12 +40,41 @@
 
         <p>Allow access to the self check from the above IP addresses. Leave blank if not used. Use ranges or simple IP addresses separated by spaces, like 192.168.1.1 192.168.0.0/24.</p>
         <p>You probably want to see <a href="/cgi-bin/koha/admin/preferences.pl?tab=&op=search&searchfield=SelfCheckAllowByIPRanges">SelfCheckAllowByIPRanges</a> system preference, [% IF ( SelfCheckAllowByIPRanges ) %]currently having value <b>[% SelfCheckAllowByIPRanges %]</b>.[% ELSE %]although it currently has no value.[% END %] This preference is not respected by this module, but you might want to copy its value here.</p>
+        
+        [% IF ( enable_virtual_keyboard ) %]
+        <p>
+        <label>Test KioskBoard virtual keyboard:</label><br />
+        <input type="text" class="js-kioskboard-input" data-kioskboard-type="numpad" data-kioskboard-placement="bottom" id="kioskboard_test_input" value="" placeholder="Click here to test the virtual keyboard" />
+        <script src="[% PLUGIN_PATH %]/opac/js/kioskboard-aio-2.3.0.min.js"></script>
+        <script>
+        // Initialize KioskBoard for test input
+        if (typeof KioskBoard !== 'undefined') {
+            KioskBoard.init({keysArrayOfObjects: [{"0":"0","1":"1"}]}); // For some reason this must be given, even if using data-* configuration
+            KioskBoard.run(document.getElementById('kioskboard_test_input'));
+        }
+        </script>
+        </p>
+        [% END %]
+        
         <p>
         <input type="hidden" name="save" value="1" />
 
         <input type="submit" value="Save configuration" />
         </p>
         <p>OPAC URL to access this plugin: <a href="[% plugin_opac_url %]">[% plugin_opac_url %]</a></p>
+        <p>KioskBoard virtual keyboard: 
+            [% IF ( enable_virtual_keyboard ) %]
+                [% IF ( kioskboard_deployed ) %]
+                    <span style="color: green;">Enabled and deployed (Version: [% kioskboard_version %])</span>
+                [% ELSE %]
+                    <span style="color: orange;">Enabled but not yet deployed</span>
+                [% END %]
+                <br />This library is automatically added to the SCOUserJS system preference when enabled.
+            [% ELSE %]
+                <span style="color: gray;">Disabled</span>
+                <br />Enable the virtual keyboard above and save to deploy the KioskBoard library to SCOUserJS.
+            [% END %]
+        </p>
     </form>
 
 [% INCLUDE 'intranet-bottom.inc' %]
