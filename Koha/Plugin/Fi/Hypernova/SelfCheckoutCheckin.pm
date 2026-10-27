@@ -21,6 +21,8 @@ use base qw(Koha::Plugins::Base);
 
 use Mojo::JSON qw(decode_json);
 use C4::Context;
+use C4::Auth;
+use Koha::Patrons;
 
 our $VERSION = "24.11.02";
 
@@ -65,14 +67,37 @@ sub opac_js {
 
     my $js = '<script src="' . $self->get_plugin_http_path() . '/opac/scc/js/scc.js"></script>';
 
-    # The virtual keyboard is only needed on the SCO login (PIN) screen.
-    if ( $path =~ m{sco/sco-main\.pl} && $self->retrieve_data('enable_virtual_keyboard') ) {
-        my $kioskboard_url = '/api/v1/contrib/' . $self->api_namespace . '/static/' . $KIOSKBOARD_FILE;
-        $js .= "\n" . '<script src="' . $kioskboard_url . '"></script>';
-        $js .= "\n" . '<script>' . $self->_kioskboard_binding_js() . '</script>';
+    if ( $path =~ m{sco/sco-main\.pl} ) {
+        # Periodically reload the SCO login screen: the AutoSelfCheckAllowed
+        # session is not refreshed after the 'timeout' system preference.
+        my $reload_js = $self->_sco_reload_js();
+        $js .= "\n" . '<script>' . $reload_js . '</script>' if $reload_js;
+
+        # The virtual keyboard is only needed on the SCO login (PIN) screen.
+        if ( $self->retrieve_data('enable_virtual_keyboard') ) {
+            my $kioskboard_url = '/api/v1/contrib/' . $self->api_namespace . '/static/' . $KIOSKBOARD_FILE;
+            $js .= "\n" . '<script src="' . $kioskboard_url . '"></script>';
+            $js .= "\n" . '<script>' . $self->_kioskboard_binding_js() . '</script>';
+        }
     }
 
     return $js;
+}
+
+sub _sco_reload_js {
+    my ( $self ) = @_;
+
+    my $timeout_seconds = C4::Context->preference('timeout') || 0;
+    my $reload_ms = $timeout_seconds > 0 ? int( $timeout_seconds * 1000 / 3 ) : 0;
+    return '' unless $reload_ms > 0;
+
+    return <<"END_JS";
+// Reload the SCO login screen periodically, because the 'AutoSelfCheckAllowed'
+// system preference fails to refresh the session after the 'timeout' preference.
+if (document.querySelector('body#sco_main')) {
+    var sccReloadTimeout = setTimeout(function () { location.reload(true); }, $reload_ms);
+}
+END_JS
 }
 
 sub _kioskboard_binding_js {
@@ -138,13 +163,13 @@ sub configure {
         my $kioskboard_url = '/api/v1/contrib/' . $self->api_namespace . '/static/' . $KIOSKBOARD_FILE;
 
         $template->param(
-            SelfCheckAllowByIPRanges => C4::Context->preference('SelfCheckAllowByIPRanges'),
-            ipallowed                => $self->retrieve_data('ipallowed'),
-            scc_sci_username         => $self->retrieve_data('scc_sci_username'),
-            scc_sci_password_set     => $self->retrieve_data('scc_sci_password') ? 1 : 0,
-            plugin_opac_url          => $plugin_url,
-            kioskboard_url           => $kioskboard_url,
-            enable_virtual_keyboard  => $self->retrieve_data('enable_virtual_keyboard'),
+            ipallowed               => $self->retrieve_data('ipallowed'),
+            scc_sci_username        => $self->retrieve_data('scc_sci_username'),
+            scc_sci_password_set    => $self->retrieve_data('scc_sci_password') ? 1 : 0,
+            plugin_opac_url         => $plugin_url,
+            kioskboard_url          => $kioskboard_url,
+            enable_virtual_keyboard => $self->retrieve_data('enable_virtual_keyboard'),
+            diagnostics             => $self->_run_diagnostics(),
         );
 
         $self->output_html( $template->output() );
@@ -169,6 +194,163 @@ sub configure {
     }
 }
 
+sub _run_diagnostics {
+    my ( $self ) = @_;
+
+    return {
+        sci => $self->_diagnose_module('sci'),
+        sco => $self->_diagnose_module('sco'),
+    };
+}
+
+sub _diagnose_module {
+    my ( $self, $module ) = @_;
+
+    my ( $username, $password, $permission, $iprange, $enabling_ok, $sysprefs );
+
+    if ( $module eq 'sci' ) {
+        $username    = $self->retrieve_data('scc_sci_username') // '';
+        $password    = $self->retrieve_data('scc_sci_password') // '';
+        $permission  = 'self_checkin_module';
+        $iprange     = $self->retrieve_data('ipallowed') // '';
+        $enabling_ok = C4::Context->preference('SelfCheckInModule') ? 1 : 0;
+        $sysprefs    = [
+            {
+                name    => 'SelfCheckInModule',
+                display => $enabling_ok ? 'Enabled' : 'Disabled',
+                ok      => $enabling_ok,
+                hint    => 'Enables the self check-in module',
+                url     => $self->_pref_url('SelfCheckInModule'),
+            },
+        ];
+    }
+    else {
+        $username    = C4::Context->preference('AutoSelfCheckID') // '';
+        $password    = C4::Context->preference('AutoSelfCheckPass') // '';
+        $permission  = 'self_checkout_module';
+        $iprange     = C4::Context->preference('SelfCheckAllowByIPRanges') // '';
+        $enabling_ok = C4::Context->preference('WebBasedSelfCheck') ? 1 : 0;
+        $sysprefs    = [
+            {
+                name    => 'WebBasedSelfCheck',
+                display => $enabling_ok ? 'Enabled' : 'Disabled',
+                ok      => $enabling_ok,
+                hint    => 'Enables web-based self checkout',
+                url     => $self->_pref_url('WebBasedSelfCheck'),
+            },
+            {
+                name    => 'AutoSelfCheckAllowed',
+                display => C4::Context->preference('AutoSelfCheckAllowed') ? 'Enabled' : 'Disabled',
+                ok      => C4::Context->preference('AutoSelfCheckAllowed') ? 1 : 0,
+                hint    => 'Automatically logs in to self checkout',
+                url     => $self->_pref_url('AutoSelfCheckAllowed'),
+            },
+            {
+                name    => 'AutoSelfCheckID',
+                display => $username ne '' ? $username : '(not set)',
+                ok      => $username ne '' ? 1 : 0,
+                hint    => 'Username used for automatic self checkout login',
+                url     => $self->_pref_url('AutoSelfCheckID'),
+            },
+            {
+                name    => 'AutoSelfCheckPass',
+                display => $password ne '' ? 'Set' : 'Not set',
+                ok      => $password ne '' ? 1 : 0,
+                hint    => 'Password used for automatic self checkout login',
+                url     => $self->_pref_url('AutoSelfCheckPass'),
+            },
+            {
+                name    => 'SelfCheckAllowByIPRanges',
+                display => $iprange ne '' ? $iprange : '(not set)',
+                ok      => 1,
+                hint    => 'Optional IP restriction for self checkout',
+                url     => $self->_pref_url('SelfCheckAllowByIPRanges'),
+            },
+        ];
+    }
+
+    my $tests = {
+        credentials => $self->_test_credentials( $username, $password ),
+        permissions => $self->_test_permissions( $username, $permission ),
+        ip          => $self->_test_ip( $iprange ),
+    };
+
+    my $ready = $enabling_ok
+        && $tests->{credentials}{ok}
+        && $tests->{permissions}{ok}
+        && $tests->{ip}{ok} ? 1 : 0;
+
+    return {
+        sysprefs => $sysprefs,
+        tests    => $tests,
+        ready    => $ready,
+    };
+}
+
+sub _test_credentials {
+    my ( $self, $username, $password ) = @_;
+
+    return { ok => 0, message => 'No username configured' }
+        unless defined $username && $username ne '';
+    return { ok => 0, message => 'No password configured' }
+        unless defined $password && $password ne '';
+
+    my ($retval) = C4::Auth::checkpw( $username, $password, $self->{'cgi'}, 'intranet', 1 );
+
+    return { ok => 1, message => 'Credentials are valid' } if $retval;
+
+    my $patron = Koha::Patrons->find( { userid => $username } )
+        || Koha::Patrons->find( { cardnumber => $username } );
+
+    return { ok => 0, message => 'User not found' } unless $patron;
+    return { ok => 0, message => 'Wrong password' };
+}
+
+sub _test_permissions {
+    my ( $self, $username, $permission ) = @_;
+
+    return { ok => 0, message => 'No username configured' }
+        unless defined $username && $username ne '';
+
+    my $patron = Koha::Patrons->find( { userid => $username } )
+        || Koha::Patrons->find( { cardnumber => $username } );
+
+    return { ok => 0, message => 'User not found' } unless $patron;
+
+    my %labels = (
+        self_checkin_module  => 'self check-in',
+        self_checkout_module => 'self check-out',
+    );
+    my $label = $labels{$permission} || $permission;
+
+    my $ok = C4::Auth::haspermission( $patron->userid, { self_check => $permission } );
+    return $ok
+        ? { ok => 1, message => "Has the $label permission" }
+        : { ok => 0, message => "Missing the $label permission" };
+}
+
+sub _test_ip {
+    my ( $self, $iprange ) = @_;
+
+    my $ip = $ENV{'REMOTE_ADDR'} // '';
+    $ip ||= $self->{'cgi'}->remote_addr() if $self->{'cgi'};
+
+    if ( !defined $iprange || $iprange eq '' ) {
+        return { ok => 1, message => "No IP restriction set. Your current IP is $ip", ip => $ip };
+    }
+
+    my $in_range = C4::Auth::in_iprange($iprange);
+    return $in_range
+        ? { ok => 1, message => "Your IP ($ip) is within the allowed range", ip => $ip }
+        : { ok => 0, message => "Your IP ($ip) is NOT within the allowed range", ip => $ip };
+}
+
+sub _pref_url {
+    my ( $self, $name ) = @_;
+
+    return '/cgi-bin/koha/admin/preferences.pl?tab=&op=search&searchfield=' . $name;
+}
+
 sub install {
     my ( $self, $args ) = @_;
 
@@ -188,3 +370,5 @@ sub upgrade {
 }
 
 1;
+
+

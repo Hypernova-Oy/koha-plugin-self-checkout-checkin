@@ -11,15 +11,79 @@
 <div id="doc3">
     <h3>Koha: Self Checkout & Check-in: Configuration</h3>
 
+    <p>OPAC URL to access this plugin: <a href="[% plugin_opac_url %]">[% plugin_opac_url %]</a></p>
+
     <form method="get">
         <input type="hidden" name="class" value="[% CLASS %]"/>
         <input type="hidden" name="method" value="[% METHOD %]"/>
+
+        <h4>Self check-out (SCO)</h4>
         <p>
-        <label for="enable_virtual_keyboard">
-            <input name="enable_virtual_keyboard" value="1" type="checkbox" [% IF enable_virtual_keyboard %]checked="checked"[% END %] />
-            Enable virtual keyboard (KioskBoard)
-        </label>
+            [% IF diagnostics.sco.ready %]
+                <span style="color: green; font-weight: bold;">Ready</span>
+            [% ELSE %]
+                <span style="color: red; font-weight: bold;">Not ready</span>
+            [% END %]
+            &mdash; <a href="/cgi-bin/koha/plugins/run.pl?class=[% CLASS %]&amp;method=[% METHOD %]">Re-run tests</a>
         </p>
+
+        <table>
+            <tr><th>System preference</th><th>Value</th><th>Status</th><th></th></tr>
+            [% FOREACH p IN diagnostics.sco.sysprefs %]
+            <tr>
+                <td title="[% p.hint %]">[% p.name %]</td>
+                <td>[% p.display %]</td>
+                <td>[% IF p.ok %]<span style="color: green;">OK</span>[% ELSE %]<span style="color: red;">Check</span>[% END %]</td>
+                <td><a href="[% p.url %]" target="_blank">Edit</a></td>
+            </tr>
+            [% END %]
+        </table>
+
+        <ul>
+            <li>Credentials:
+                [% IF diagnostics.sco.tests.credentials.ok %]
+                    <span style="color: green;">[% diagnostics.sco.tests.credentials.message %]</span>
+                [% ELSE %]
+                    <span style="color: red;">[% diagnostics.sco.tests.credentials.message %]</span>
+                [% END %]
+            </li>
+            <li>Permissions:
+                [% IF diagnostics.sco.tests.permissions.ok %]
+                    <span style="color: green;">[% diagnostics.sco.tests.permissions.message %]</span>
+                [% ELSE %]
+                    <span style="color: red;">[% diagnostics.sco.tests.permissions.message %]</span>
+                [% END %]
+            </li>
+            <li>IP:
+                [% IF diagnostics.sco.tests.ip.ok %]
+                    <span style="color: green;">[% diagnostics.sco.tests.ip.message %]</span>
+                [% ELSE %]
+                    <span style="color: red;">[% diagnostics.sco.tests.ip.message %]</span>
+                [% END %]
+            </li>
+        </ul>
+
+        <h4>Self check-in (SCI)</h4>
+        <p>
+            [% IF diagnostics.sci.ready %]
+                <span style="color: green; font-weight: bold;">Ready</span>
+            [% ELSE %]
+                <span style="color: red; font-weight: bold;">Not ready</span>
+            [% END %]
+            &mdash; <a href="/cgi-bin/koha/plugins/run.pl?class=[% CLASS %]&amp;method=[% METHOD %]">Re-run tests</a>
+        </p>
+
+        <table>
+            <tr><th>System preference</th><th>Value</th><th>Status</th><th></th></tr>
+            [% FOREACH p IN diagnostics.sci.sysprefs %]
+            <tr>
+                <td title="[% p.hint %]">[% p.name %]</td>
+                <td>[% p.display %]</td>
+                <td>[% IF p.ok %]<span style="color: green;">OK</span>[% ELSE %]<span style="color: red;">Check</span>[% END %]</td>
+                <td><a href="[% p.url %]" target="_blank">Edit</a></td>
+            </tr>
+            [% END %]
+        </table>
 
         <p>
         <label for="scc_sci_username">Self check-in username or cardnumber: </label>
@@ -29,14 +93,41 @@
         <label for="scc_sci_password">Self check-in password: </label>
         <input name="scc_sci_password" value="[% IF scc_sci_password_set %]********[% END %]" type="password" autocomplete="new-password" />
         </p>
-
         <p>
-        <label for="ipallowed">IP addresses allowed: </label>
+        <label for="ipallowed">IP addresses allowed (leave blank if not used): </label>
         <input name="ipallowed" value="[% ipallowed %]" />
         </p>
 
-        <p>Allow access to the self check from the above IP addresses. Leave blank if not used. Use ranges or simple IP addresses separated by spaces, like 192.168.1.1 192.168.0.0/24.</p>
-        <p>You probably want to see <a href="/cgi-bin/koha/admin/preferences.pl?tab=&op=search&searchfield=SelfCheckAllowByIPRanges">SelfCheckAllowByIPRanges</a> system preference, [% IF ( SelfCheckAllowByIPRanges ) %]currently having value <b>[% SelfCheckAllowByIPRanges %]</b>.[% ELSE %]although it currently has no value.[% END %] This preference is not respected by this module, but you might want to copy its value here.</p>
+        <ul>
+            <li>Credentials:
+                [% IF diagnostics.sci.tests.credentials.ok %]
+                    <span style="color: green;">[% diagnostics.sci.tests.credentials.message %]</span>
+                [% ELSE %]
+                    <span style="color: red;">[% diagnostics.sci.tests.credentials.message %]</span>
+                [% END %]
+            </li>
+            <li>Permissions:
+                [% IF diagnostics.sci.tests.permissions.ok %]
+                    <span style="color: green;">[% diagnostics.sci.tests.permissions.message %]</span>
+                [% ELSE %]
+                    <span style="color: red;">[% diagnostics.sci.tests.permissions.message %]</span>
+                [% END %]
+            </li>
+            <li>IP:
+                [% IF diagnostics.sci.tests.ip.ok %]
+                    <span style="color: green;">[% diagnostics.sci.tests.ip.message %]</span>
+                [% ELSE %]
+                    <span style="color: red;">[% diagnostics.sci.tests.ip.message %]</span>
+                [% END %]
+            </li>
+        </ul>
+
+        <p>
+        <label for="enable_virtual_keyboard">
+            <input name="enable_virtual_keyboard" value="1" type="checkbox" [% IF enable_virtual_keyboard %]checked="checked"[% END %] />
+            Enable virtual keyboard (KioskBoard)
+        </label>
+        </p>
 
         [% IF ( enable_virtual_keyboard ) %]
         <p>
@@ -55,10 +146,9 @@
 
         <p>
         <input type="hidden" name="save" value="1" />
-
         <input type="submit" value="Save configuration" />
         </p>
-        <p>OPAC URL to access this plugin: <a href="[% plugin_opac_url %]">[% plugin_opac_url %]</a></p>
     </form>
 
 [% INCLUDE 'intranet-bottom.inc' %]
+
