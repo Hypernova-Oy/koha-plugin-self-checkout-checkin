@@ -35,6 +35,18 @@ require Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin;
 my $t = Test::Mojo->new('Koha::REST::V1');
 
 subtest 'SCC page loads' => sub {
+    # The combined self-checkout/check-in page now relies on Koha's SCO
+    # auto-login (AutoSelfCheckAllowed + AutoSelfCheckID/AutoSelfCheckPass) to
+    # render when OpacPublic requires authentication. When that is not
+    # configured there is nothing to render, so skip rather than dumping the
+    # OPAC login page.
+    my $auto_allowed = C4::Context->preference('AutoSelfCheckAllowed');
+    my $auto_id      = C4::Context->preference('AutoSelfCheckID') // '';
+    my $auto_pass    = C4::Context->preference('AutoSelfCheckPass') // '';
+
+    plan skip_all => 'AutoSelfCheckAllowed/AutoSelfCheckID/AutoSelfCheckPass not configured'
+        if !$auto_allowed || $auto_id eq '' || $auto_pass eq '';
+
     $t->get_ok('/api/v1/contrib/hypernova/scc')
         ->status_is(200)
         ->header_like( 'Content-Type' => qr{text/html} )
@@ -58,14 +70,14 @@ subtest 'opac_js on the SCO screen' => sub {
     my $plugin = $plugin_class->new( { enable_plugins => 1 } );
     local $ENV{'SCRIPT_NAME'} = '/cgi-bin/koha/sco/sco-main.pl';
     my $js = $plugin->opac_js;
-    like( $js, qr{scc\.js}, 'loads scc.js' );
+    like( $js, qr{opac/sco/js/scc\.js}, 'loads scc.js from the sco bundle path' );
 };
 
 subtest 'opac_js on the SCI screen' => sub {
     my $plugin = $plugin_class->new( { enable_plugins => 1 } );
     local $ENV{'SCRIPT_NAME'} = '/cgi-bin/koha/sci/sci-main.pl';
     my $js = $plugin->opac_js;
-    like( $js, qr{scc\.js}, 'loads scc.js' );
+    like( $js, qr{opac/sco/js/scc\.js}, 'loads scc.js from the sco bundle path' );
 };
 
 subtest 'opac_js is empty elsewhere' => sub {

@@ -66,7 +66,7 @@ sub opac_js {
     my $path = $ENV{'SCRIPT_NAME'} // $ENV{'REQUEST_URI'} // '';
     return '' unless $path =~ m{(?:sco/sco-main\.pl|sci/sci-main\.pl)};
 
-    my $js = '<script src="' . $self->get_plugin_http_path() . '/opac/scc/js/scc.js"></script>';
+    my $js = '<script src="' . $self->get_plugin_http_path() . '/opac/sco/js/scc.js"></script>';
 
     if ( $path =~ m{sco/sco-main\.pl} ) {
         # Periodically reload the SCO login screen: the AutoSelfCheckAllowed

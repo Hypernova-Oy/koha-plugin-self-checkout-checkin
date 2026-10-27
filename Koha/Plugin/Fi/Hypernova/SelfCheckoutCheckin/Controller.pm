@@ -94,12 +94,18 @@ sub template {
             return $c->redirect_to('/cgi-bin/koha/opac-main.pl');
         }
 
+        # Mark this as a self-checkout session so Koha performs the SCO
+        # auto-login (AutoSelfCheckAllowed) and checks the self-checkout
+        # permission, instead of bouncing to the OPAC login page when the
+        # OpacPublic system preference requires authentication.
+        $cgi->param( -name => 'sco_user_login', -values => [1] );
+
         my ( $template, $loggedinuser, $cookie ) = C4::Auth::get_template_and_user(
             {
-                template_name   => $scc_obj->mbf_path('opac/scc/scc.tt'),
+                template_name   => $scc_obj->mbf_path('opac/sco/scc.tt'),
                 query           => $scc_obj->{'cgi'},
                 type            => "opac",
-                authnotrequired => 1,
+                flagsrequired   => { self_check => "self_checkout_module" },
             }
         );
         $template->param(
