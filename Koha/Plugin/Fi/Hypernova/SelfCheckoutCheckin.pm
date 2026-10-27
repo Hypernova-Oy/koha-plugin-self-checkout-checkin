@@ -24,13 +24,14 @@ use C4::Context;
 use C4::Auth;
 use Koha::Patrons;
 
-our $VERSION = "24.11.02";
+our $VERSION = "24.11.02"; #PLACEHOLDER
+our $DATE_UPDATED = "2025-11-26"; #PLACEHOLDER
 
 our $metadata = {
     name            => 'Self Checkout & Check-in without login',
     author          => 'Lari Taskula',
     date_authored   => '2023-08-04',
-    date_updated    => "2025-11-26",
+    date_updated    => $DATE_UPDATED,
     minimum_version => '24.05.01.000',
     maximum_version => undef,
     version         => $VERSION,
