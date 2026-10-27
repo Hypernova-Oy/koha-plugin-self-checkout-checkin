@@ -131,13 +131,48 @@
 
         [% IF ( enable_virtual_keyboard ) %]
         <p>
+        <label for="kioskboard_theme">Keyboard theme: </label>
+        <select name="kioskboard_theme">
+            [% FOREACH t IN ['light','dark','flat','material','oldschool'] %]
+            <option value="[% t %]" [% IF kioskboard_theme == t %]selected="selected"[% END %]>[% t %]</option>
+            [% END %]
+        </select>
+        </p>
+
+        <p>
+        <label for="kioskboard_layout">Keyboard layout: </label>
+        <select name="kioskboard_layout">
+            [% FOREACH l IN ['all','keyboard','numpad'] %]
+            <option value="[% l %]" [% IF kioskboard_layout == l %]selected="selected"[% END %]>[% l %]</option>
+            [% END %]
+        </select>
+        </p>
+
+        <p>
+        <label for="kioskboard_keys_json">Custom keys (JSON, optional): </label>
+        <textarea name="kioskboard_keys_json" rows="4" cols="60">[% kioskboard_keys_json %]</textarea>
+        <br /><small>Overrides the layout. Format: [{"0":"A","1":"B"}, ...]. Special keys: Backspace, Enter, Caps, Space.</small>
+        </p>
+
+        <p>Enable the keyboard on these fields:</p>
+        <ul>
+            <li><label><input type="checkbox" name="kioskboard_field_patronid" value="1" [% IF kioskboard_field_patronid %]checked="checked"[% END %] /> SCO patron ID / barcode</label></li>
+            <li><label><input type="checkbox" name="kioskboard_field_patronlogin" value="1" [% IF kioskboard_field_patronlogin %]checked="checked"[% END %] /> SCO username</label></li>
+            <li><label><input type="checkbox" name="kioskboard_field_patronpw" value="1" [% IF kioskboard_field_patronpw %]checked="checked"[% END %] /> SCO password / PIN</label></li>
+            <li><label><input type="checkbox" name="kioskboard_field_barcode" value="1" [% IF kioskboard_field_barcode %]checked="checked"[% END %] /> SCI check-in barcode</label></li>
+        </ul>
+
+        <p>
         <label>Test KioskBoard virtual keyboard:</label><br />
-        <input type="text" class="js-kioskboard-input" data-kioskboard-type="numpad" data-kioskboard-placement="bottom" id="kioskboard_test_input" value="" placeholder="Click here to test the virtual keyboard" />
+        <input type="text" class="js-kioskboard-input" data-kioskboard-type="[% kioskboard_layout %]" data-kioskboard-placement="bottom" id="kioskboard_test_input" value="" placeholder="Click here to test the virtual keyboard" />
         <script src="[% kioskboard_url %]"></script>
         <script>
         // Initialize KioskBoard for test input
         if (typeof KioskBoard !== 'undefined') {
-            KioskBoard.init({keysArrayOfObjects: [{"0":"0","1":"1"}]});
+            KioskBoard.init({
+                theme: '[% kioskboard_theme %]',
+                keysArrayOfObjects: [% IF kioskboard_keys_json %][% kioskboard_keys_json %][% ELSE %][{"0":"0","1":"1"}][% END %]
+            });
             KioskBoard.run(document.getElementById('kioskboard_test_input'));
         }
         </script>

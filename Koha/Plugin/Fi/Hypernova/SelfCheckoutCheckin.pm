@@ -73,12 +73,16 @@ sub opac_js {
         # session is not refreshed after the 'timeout' system preference.
         my $reload_js = $self->_sco_reload_js();
         $js .= "\n" . '<script>' . $reload_js . '</script>' if $reload_js;
+    }
 
-        # The virtual keyboard is only needed on the SCO login (PIN) screen.
-        if ( $self->retrieve_data('enable_virtual_keyboard') ) {
+    # The KioskBoard virtual keyboard is available on both the SCO and SCI screens.
+    if ( $self->retrieve_data('enable_virtual_keyboard') ) {
+        my $page = $path =~ m{sci/sci-main\.pl} ? 'sci' : 'sco';
+        my $kioskboard_js = $self->_kioskboard_js($page);
+        if ($kioskboard_js) {
             my $kioskboard_url = '/api/v1/contrib/' . $self->api_namespace . '/static/' . $KIOSKBOARD_FILE;
             $js .= "\n" . '<script src="' . $kioskboard_url . '"></script>';
-            $js .= "\n" . '<script>' . $self->_kioskboard_binding_js() . '</script>';
+            $js .= "\n" . '<script>' . $kioskboard_js . '</script>';
         }
     }
 
@@ -101,19 +105,52 @@ if (document.querySelector('body#sco_main')) {
 END_JS
 }
 
-sub _kioskboard_binding_js {
-    my ( $self ) = @_;
+sub _kioskboard_js {
+    my ( $self, $page ) = @_;
 
-    return <<'END_JS';
-// Enable KioskBoard numeric keypad for SCO PIN input
+    my @selectors;
+    if ( $page eq 'sco' ) {
+        push @selectors, 'body#sco_main input#patronid'    if $self->retrieve_data('kioskboard_field_patronid');
+        push @selectors, 'body#sco_main input#patronlogin' if $self->retrieve_data('kioskboard_field_patronlogin');
+        push @selectors, 'body#sco_main input#patronpw'    if $self->retrieve_data('kioskboard_field_patronpw') // 1;
+    }
+    else {
+        push @selectors, 'body#sci_main input#barcode_input' if $self->retrieve_data('kioskboard_field_barcode') // 1;
+    }
+    return '' unless @selectors;
+
+    my %valid_themes  = map { $_ => 1 } qw( light dark flat material oldschool );
+    my %valid_layouts = map { $_ => 1 } qw( all keyboard numpad );
+
+    my $theme = $self->retrieve_data('kioskboard_theme');
+    $theme = 'light' unless $valid_themes{$theme};
+
+    my $layout = $self->retrieve_data('kioskboard_layout');
+    $layout = 'numpad' unless $valid_layouts{$layout};
+
+    my $keys_json  = $self->retrieve_data('kioskboard_keys_json') || '';
+    my $keys_array = '[{"0":"0","1":"1"}]';
+    if ( $keys_json =~ /\S/ ) {
+        my $decoded = eval { decode_json($keys_json) };
+        $keys_array = $keys_json if $decoded && ref($decoded) eq 'ARRAY';
+    }
+
+    my $selector_list = join ', ', @selectors;
+
+    return <<"END_JS";
 if (typeof KioskBoard !== 'undefined') {
-    var pinInput = document.querySelector('body#sco_main input#patronpw');
-    if (pinInput) {
-        pinInput.setAttribute("class","js-kioskboard-input");
-        pinInput.setAttribute("data-kioskboard-type","numpad");
-        pinInput.setAttribute("data-kioskboard-placement","bottom");
-        KioskBoard.init({keysArrayOfObjects: [{"0":"0","1":"1"}]}); // For some reason this must be given, even if using data-* configuration
-        KioskBoard.run(pinInput);
+    var sccInputs = document.querySelectorAll('$selector_list');
+    if (sccInputs.length) {
+        [].forEach.call(sccInputs, function (input) {
+            input.classList.add('js-kioskboard-input');
+            input.setAttribute('data-kioskboard-type', '$layout');
+            input.setAttribute('data-kioskboard-placement', 'bottom');
+        });
+        KioskBoard.init({
+            theme: '$theme',
+            keysArrayOfObjects: $keys_array
+        });
+        KioskBoard.run('$selector_list');
     }
 }
 END_JS
@@ -164,13 +201,20 @@ sub configure {
         my $kioskboard_url = '/api/v1/contrib/' . $self->api_namespace . '/static/' . $KIOSKBOARD_FILE;
 
         $template->param(
-            ipallowed               => $self->retrieve_data('ipallowed'),
-            scc_sci_username        => $self->retrieve_data('scc_sci_username'),
-            scc_sci_password_set    => $self->retrieve_data('scc_sci_password') ? 1 : 0,
-            plugin_opac_url         => $plugin_url,
-            kioskboard_url          => $kioskboard_url,
-            enable_virtual_keyboard => $self->retrieve_data('enable_virtual_keyboard'),
-            diagnostics             => $self->_run_diagnostics(),
+            ipallowed                  => $self->retrieve_data('ipallowed'),
+            scc_sci_username           => $self->retrieve_data('scc_sci_username'),
+            scc_sci_password_set       => $self->retrieve_data('scc_sci_password') ? 1 : 0,
+            plugin_opac_url            => $plugin_url,
+            kioskboard_url             => $kioskboard_url,
+            enable_virtual_keyboard    => $self->retrieve_data('enable_virtual_keyboard'),
+            kioskboard_theme           => $self->retrieve_data('kioskboard_theme') || 'light',
+            kioskboard_layout          => $self->retrieve_data('kioskboard_layout') || 'numpad',
+            kioskboard_keys_json       => $self->retrieve_data('kioskboard_keys_json') || '',
+            kioskboard_field_patronid  => $self->retrieve_data('kioskboard_field_patronid') ? 1 : 0,
+            kioskboard_field_patronlogin => $self->retrieve_data('kioskboard_field_patronlogin') ? 1 : 0,
+            kioskboard_field_patronpw  => $self->retrieve_data('kioskboard_field_patronpw') // 1,
+            kioskboard_field_barcode   => $self->retrieve_data('kioskboard_field_barcode') // 1,
+            diagnostics                => $self->_run_diagnostics(),
         );
 
         $self->output_html( $template->output() );
@@ -179,9 +223,16 @@ sub configure {
         my $enable_virtual_keyboard = $cgi->param('enable_virtual_keyboard') ? 1 : 0;
 
         my $data = {
-            scc_sci_username        => scalar $cgi->param('scc_sci_username'),
-            ipallowed               => scalar $cgi->param('ipallowed'),
-            enable_virtual_keyboard => $enable_virtual_keyboard,
+            scc_sci_username           => scalar $cgi->param('scc_sci_username'),
+            ipallowed                  => scalar $cgi->param('ipallowed'),
+            enable_virtual_keyboard    => $enable_virtual_keyboard,
+            kioskboard_theme           => scalar $cgi->param('kioskboard_theme') || 'light',
+            kioskboard_layout          => scalar $cgi->param('kioskboard_layout') || 'numpad',
+            kioskboard_keys_json       => scalar $cgi->param('kioskboard_keys_json') || '',
+            kioskboard_field_patronid  => $cgi->param('kioskboard_field_patronid') ? 1 : 0,
+            kioskboard_field_patronlogin => $cgi->param('kioskboard_field_patronlogin') ? 1 : 0,
+            kioskboard_field_patronpw  => $cgi->param('kioskboard_field_patronpw') ? 1 : 0,
+            kioskboard_field_barcode   => $cgi->param('kioskboard_field_barcode') ? 1 : 0,
         };
 
         # Only overwrite the stored password when a new value is submitted.
