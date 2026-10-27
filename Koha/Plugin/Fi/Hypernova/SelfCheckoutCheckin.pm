@@ -20,7 +20,6 @@ use Modern::Perl;
 use base qw(Koha::Plugins::Base);
 
 use Mojo::JSON qw(decode_json);
-use Try::Tiny;
 use C4::Context;
 
 our $VERSION = "24.11.02";
@@ -35,6 +34,11 @@ our $metadata = {
     version         => $VERSION,
     description     => 'This plugin adds combined self checkout and check-in view to OPAC. Check-in in this plugin requires no login.',
 };
+
+# Filename of the bundled KioskBoard virtual keyboard library. It is served
+# through a cacheable REST API static route (see static_routes below) instead of
+# being injected into the SCOUserJS system preference.
+our $KIOSKBOARD_FILE = 'kioskboard-aio-2.3.0.min.js';
 
 sub new {
     my ( $class, $args ) = @_;
@@ -54,47 +58,27 @@ sub new {
 sub opac_js {
     my ( $self ) = @_;
 
-    return '<script src="'.$self->get_plugin_http_path().'/opac/scc/js/scc.js"></script>';
+    # Only extend the self checkout (SCO) and self check-in (SCI) screens. The
+    # request URL is available in the PSGI/CGI environment during OPAC rendering.
+    my $path = $ENV{'SCRIPT_NAME'} // $ENV{'REQUEST_URI'} // '';
+    return '' unless $path =~ m{(?:sco/sco-main\.pl|sci/sci-main\.pl)};
+
+    my $js = '<script src="' . $self->get_plugin_http_path() . '/opac/scc/js/scc.js"></script>';
+
+    # The virtual keyboard is only needed on the SCO login (PIN) screen.
+    if ( $path =~ m{sco/sco-main\.pl} && $self->retrieve_data('enable_virtual_keyboard') ) {
+        my $kioskboard_url = '/api/v1/contrib/' . $self->api_namespace . '/static/' . $KIOSKBOARD_FILE;
+        $js .= "\n" . '<script src="' . $kioskboard_url . '"></script>';
+        $js .= "\n" . '<script>' . $self->_kioskboard_binding_js() . '</script>';
+    }
+
+    return $js;
 }
 
-sub api_routes {
-    my ( $self, $args ) = @_;
-
-    my $spec_str = $self->mbf_read('openapi.json');
-    my $spec     = decode_json($spec_str);
-
-    return $spec;
-}
-
-sub api_namespace {
+sub _kioskboard_binding_js {
     my ( $self ) = @_;
-    
-    return 'hypernova';
-}
 
-sub _get_kioskboard_content {
-    my ( $self ) = @_;
-    
-    my $kioskboard_file = $self->mbf_path('opac/js/kioskboard-aio-2.3.0.min.js');
-    open my $fh, '<', $kioskboard_file or return '';
-    local $/;
-    my $content = <$fh>;
-    close $fh;
-    
-    return $content;
-}
-
-sub _get_kioskboard_version {
-    my ( $self ) = @_;
-    
-    return '2.3.0';
-}
-
-sub _get_kioskboard_binding_js {
-    my ( $self ) = @_;
-    
     return <<'END_JS';
-
 // Enable KioskBoard numeric keypad for SCO PIN input
 if (typeof KioskBoard !== 'undefined') {
     var pinInput = document.querySelector('body#sco_main input#patronpw');
@@ -109,65 +93,37 @@ if (typeof KioskBoard !== 'undefined') {
 END_JS
 }
 
-sub _install_kioskboard_to_sco_user_js {
-    my ( $self, $force ) = @_;
-    
-    my $enable_virtual_keyboard = $self->retrieve_data('enable_virtual_keyboard');
-    
-    unless ( $enable_virtual_keyboard || $force ) {
-        return 1;
-    }
-    
-    my $kioskboard_version = $self->_get_kioskboard_version();
-    my $kioskboard_content = $self->_get_kioskboard_content();
-    my $kioskboard_binding_js = $self->_get_kioskboard_binding_js();
-    
-    return unless $kioskboard_content && $kioskboard_binding_js;
-    
-    my $sco_user_js = C4::Context->preference('SCOUserJS') || '';
-    
-    my $version_regex = qr/\/\* KioskBoard - Virtual Keyboard \(https:\/\/github\.com\/furcan\/KioskBoard\) - Version: (\d+\.\d+\.\d+)/;
-    
-    if ( $sco_user_js =~ /$version_regex/ ) {
-        my $existing_version = $1;
-        
-        if ( $existing_version eq $kioskboard_version ) {
-            return 1;
-        }
-        
-        $sco_user_js =~ s/\/\/ KioskBoard - Added by Self Checkout & Check-in plugin \(Version: \d+\.\d+\.\d+\).*?\n\n.*?\n//gs;
-    }
-    
-    my $new_content = "// KioskBoard - Added by Self Checkout & Check-in plugin (Version: $kioskboard_version)\n" . $kioskboard_content . "\n" . $kioskboard_binding_js . "\n\n" . $sco_user_js;
-    
-    C4::Context->set_preference('SCOUserJS', $new_content);
-    
-    return 1;
+sub api_routes {
+    my ( $self, $args ) = @_;
+
+    my $spec_str = $self->mbf_read('openapi.json');
+    my $spec     = decode_json($spec_str);
+
+    return $spec;
 }
 
-sub _check_kioskboard_in_sco_user_js {
-    my ( $self ) = @_;
-    
-    my $sco_user_js = C4::Context->preference('SCOUserJS') || '';
-    my $version_regex = qr/\/\* KioskBoard - Virtual Keyboard \(https:\/\/github\.com\/furcan\/KioskBoard\) - Version: (\d+\.\d+\.\d+)/;
-    
-    if ( $sco_user_js =~ /$version_regex/ ) {
-        return $1;
-    }
-    
-    return '';
+sub static_routes {
+    my ( $self, $args ) = @_;
+
+    return {
+        "/$KIOSKBOARD_FILE" => {
+            get => {
+                'x-mojo-to' => 'Fi::Hypernova::SelfCheckoutCheckin::Controller#kioskboard',
+                operationId => 'kioskboard',
+                tags        => ['kioskboard'],
+                produces    => ['application/javascript'],
+                responses   => {
+                    200 => { description => 'KioskBoard virtual keyboard library' },
+                },
+            },
+        },
+    };
 }
 
-sub _remove_kioskboard_from_sco_user_js {
+sub api_namespace {
     my ( $self ) = @_;
-    
-    my $sco_user_js = C4::Context->preference('SCOUserJS') || '';
-    
-    $sco_user_js =~ s/\/\/ KioskBoard - Added by Self Checkout & Check-in plugin \(Version: \d+\.\d+\.\d+\).*?\n\n.*?\n//gs;
-    
-    C4::Context->set_preference('SCOUserJS', $sco_user_js);
-    
-    return 1;
+
+    return 'hypernova';
 }
 
 sub configure {
@@ -177,63 +133,57 @@ sub configure {
     unless ( $cgi->param('save') ) {
         my $template = $self->get_template( { file => 'configure.tt' } );
 
-        my $opac_base_url = C4::Context->preference('OPACBaseURL') || '';
-        my $plugin_url = $opac_base_url . '/api/v1/contrib/' . $self->api_namespace . '/scc';
-        
-        my $kioskboard_version = $self->_check_kioskboard_in_sco_user_js();
-        my $enable_virtual_keyboard = $self->retrieve_data('enable_virtual_keyboard');
+        my $opac_base_url  = C4::Context->preference('OPACBaseURL') || '';
+        my $plugin_url     = $opac_base_url . '/api/v1/contrib/' . $self->api_namespace . '/scc';
+        my $kioskboard_url = '/api/v1/contrib/' . $self->api_namespace . '/static/' . $KIOSKBOARD_FILE;
 
-        ## Grab the values we already have for our settings, if any exist
         $template->param(
             SelfCheckAllowByIPRanges => C4::Context->preference('SelfCheckAllowByIPRanges'),
-            ipallowed => $self->retrieve_data('ipallowed'),
-            scc_sci_username => $self->retrieve_data('scc_sci_username'),
-            scc_sci_password => $self->retrieve_data('scc_sci_password'),
-            plugin_opac_url => $plugin_url,
-            kioskboard_deployed => $kioskboard_version ? 1 : 0,
-            kioskboard_version => $kioskboard_version || '',
-            enable_virtual_keyboard => $enable_virtual_keyboard,
+            ipallowed                => $self->retrieve_data('ipallowed'),
+            scc_sci_username         => $self->retrieve_data('scc_sci_username'),
+            scc_sci_password_set     => $self->retrieve_data('scc_sci_password') ? 1 : 0,
+            plugin_opac_url          => $plugin_url,
+            kioskboard_url           => $kioskboard_url,
+            enable_virtual_keyboard  => $self->retrieve_data('enable_virtual_keyboard'),
         );
 
         $self->output_html( $template->output() );
     }
     else {
         my $enable_virtual_keyboard = $cgi->param('enable_virtual_keyboard') ? 1 : 0;
-        
-        $self->store_data(
-            {
-                scc_sci_username => scalar $cgi->param('scc_sci_username'),
-                scc_sci_password => scalar $cgi->param('scc_sci_password'),
-                ipallowed => scalar $cgi->param('ipallowed'),
-                enable_virtual_keyboard => $enable_virtual_keyboard,
-            }
-        );
-        $self->_install_kioskboard_to_sco_user_js();
+
+        my $data = {
+            scc_sci_username        => scalar $cgi->param('scc_sci_username'),
+            ipallowed               => scalar $cgi->param('ipallowed'),
+            enable_virtual_keyboard => $enable_virtual_keyboard,
+        };
+
+        # Only overwrite the stored password when a new value is submitted.
+        # A value of only asterisks (the masked placeholder) means "keep current".
+        my $password = scalar $cgi->param('scc_sci_password');
+        $data->{scc_sci_password} = $password
+            if defined $password && $password ne '' && $password !~ /^\*+$/;
+
+        $self->store_data($data);
         $self->go_home();
     }
 }
 
 sub install {
     my ( $self, $args ) = @_;
-    
-    $self->_install_kioskboard_to_sco_user_js(1);
-    
+
     return 1;
 }
 
 sub uninstall {
     my ( $self, $args ) = @_;
-    
-    $self->_remove_kioskboard_from_sco_user_js();
-    
+
     return 1;
 }
 
 sub upgrade {
     my ( $self, $args ) = @_;
-    
-    $self->_install_kioskboard_to_sco_user_js(1);
-    
+
     return 1;
 }
 

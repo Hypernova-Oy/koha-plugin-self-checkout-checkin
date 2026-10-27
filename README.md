@@ -124,3 +124,17 @@ if (new RegExp("fi-FI").exec($("html").attr("lang"))) {
 ```
 $.each($("#sci_bcheckins_table").find('td'), function() { if (new RegExp('Kirja ei ole tällä hetkellä lainassa').exec($(this).html())) { $(this).html("Palautettu"); } });
 ```
+
+## Virtual keyboard (KioskBoard)
+
+Enable the *virtual keyboard* checkbox in the plugin configuration to load the
+bundled KioskBoard library on the self checkout login screen. The library is
+served from a cacheable REST API endpoint and is only loaded on the pages that
+need it.
+
+## Security note
+
+The self check-in account password is stored in the plugin configuration and is
+readable by anyone with access to the `plugin_data` database table. This mirrors
+Koha's own `AutoSelfCheckPass` system preference, which is also stored in plain
+text. Consider using a dedicated, low-privilege account for self check-in.

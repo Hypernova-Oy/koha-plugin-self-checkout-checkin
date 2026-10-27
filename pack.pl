@@ -32,7 +32,7 @@ use Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin;
 my $version  = $Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin::VERSION;
 my $filename = "/tmp/koha-plugin-self-checkout-checkin-$version.kpz";
 
-say `zip -r $filename Koha/`;
+system('zip', '-r', $filename, 'Koha/');
 
 if ( -f $filename ) {
     say "$filename created";

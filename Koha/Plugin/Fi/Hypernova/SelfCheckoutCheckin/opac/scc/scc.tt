@@ -57,8 +57,6 @@ h2.scc-button a {
 }
 h2.scc-button a.disabled {
     background:#aaa !important;
-}
-h2.scc-button a.disabled {
     color:#222 !important;
 }
 </style>
@@ -79,6 +77,7 @@ h2.scc-button a.disabled {
 </div> <!-- / .main -->
 [% INCLUDE 'opac-bottom.inc' %]
 [% BLOCK jsinclude %]
+<script src="[% PLUGIN_PATH %]/opac/scc/js/scc.js"></script>
 <script>
 $("a#start-checkout, a#start-checkin").click(function (event) {
     if ($(this).hasClass("disabled")) {

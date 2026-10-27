@@ -21,13 +21,9 @@ use Mojo::Base 'Mojolicious::Controller';
 use Mojo::File;
 use Try::Tiny;
 
-use Koha::DateUtils;
-use Koha::Libraries;
+use CGI;
 
-use C4::Context;
-use C4::Output qw( output_html_with_http_headers );
 use C4::Auth qw( get_template_and_user );
-use C4::Circulation;
 use Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin;
 
 =head1 Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin::Controller
@@ -50,12 +46,11 @@ sub redirect_checkin {
 
         my $scc_obj = Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin->new;
         my $cgi = CGI->new;
-        
+
         my $ipallowed = $scc_obj->retrieve_data('ipallowed');
         if ( $ipallowed && !C4::Auth::in_iprange($ipallowed) ) {
             $c->app->log->warn('User (' . $ENV{'REMOTE_ADDR'} . ') not allowed to access SCI');
-            print $c->redirect_to('/cgi-bin/koha/sci/sci-main.pl');
-            return;
+            return $c->redirect_to('/cgi-bin/koha/sci/sci-main.pl');
         }
 
         $cgi->param(login_userid => $scc_obj->retrieve_data('scc_sci_username'));
@@ -67,7 +62,7 @@ sub redirect_checkin {
         );
 
         $c->cookie(CGISESSID => $sessionid, { path => "/" });
-        $c->redirect_to('/cgi-bin/koha/sci/sci-main.pl');
+        return $c->redirect_to('/cgi-bin/koha/sci/sci-main.pl');
     }
     catch {
         $c->unhandled_exception($_);
@@ -82,17 +77,21 @@ sub template {
 
         my $scc_obj = Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin->new;
         my $cgi = CGI->new;
+
         my $lang = $c->param('language') || $c->cookie('KohaOpacLanguage') || 'fi-FI';
+        $lang =~ s/[^a-zA-Z_-]//g;    # sanitize against path traversal
+        $lang ||= 'fi-FI';
+
         my $memory_cache = Koha::Cache::Memory::Lite->get_instance();
         my $cache_key    = "getlanguage";
         $memory_cache->set_in_cache( $cache_key, $lang );
         $cgi->param('language', $lang);
         $scc_obj->{'cgi'} = $cgi;
+
         my $ipallowed = $scc_obj->retrieve_data('ipallowed');
         if ( $ipallowed && !C4::Auth::in_iprange($ipallowed) ) {
             $c->app->log->warn('User (' . $ENV{'REMOTE_ADDR'} . ') not allowed to access SCC');
-            print $c->redirect_to('/cgi-bin/koha/opac-main.pl');
-            return;
+            return $c->redirect_to('/cgi-bin/koha/opac-main.pl');
         }
 
         my ( $template, $loggedinuser, $cookie ) = C4::Auth::get_template_and_user(
@@ -104,8 +103,6 @@ sub template {
             }
         );
         $template->param(
-            CLASS       => $scc_obj->{'class'},
-            METHOD      => scalar $scc_obj->{'cgi'}->param('method'),
             PLUGIN_PATH => $scc_obj->get_plugin_http_path(),
             PLUGIN_DIR  => $scc_obj->bundle_path(),
             LANG        => $lang,
@@ -129,6 +126,20 @@ sub template {
     catch {
         $c->unhandled_exception($_);
     };
+}
+
+sub kioskboard {
+    my $c = shift->openapi->valid_input or return;
+
+    my $scc_obj = Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin->new;
+    my $file = $scc_obj->mbf_path( 'opac/js/' . $Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin::KIOSKBOARD_FILE );
+
+    return $c->render( status => 404, text => 'File not found' ) unless -f $file;
+
+    my $content = Mojo::File->new($file)->slurp;
+    $c->res->headers->cache_control('public, max-age=86400');
+    $c->res->headers->content_type('application/javascript; charset=UTF-8');
+    return $c->render( text => $content );
 }
 
 1;
