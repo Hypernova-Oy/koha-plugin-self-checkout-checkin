@@ -108,20 +108,14 @@ sub template {
             LANG        => $lang,
         );
 
-        local *STDOUT;
-        my $stdout;
-        open STDOUT, '>', \$stdout;
-        $scc_obj->output_html($template->output);
-        close STDOUT;
+        my $html = $template->output;
 
-        unless ($stdout =~ m!^\s*HTTP/(\d\.\d)\s+(\d\d\d)\s*(.+)?$!) {
-            # https://docs.mojolicious.org/Mojo/Message/Response.txt
-            $stdout = "HTTP/1.1 200 OK\n$stdout";
-        }
-        $c->res->parse($stdout);
         $c->cookie(CGISESSID => '', { path => "/" });
         $c->cookie(KohaOpacLanguage => $lang, { path => "/" });
-        return $c->render( text => $c->res->body );
+        $c->res->headers->header( 'X-Frame-Options' => 'SAMEORIGIN' );
+        $c->res->headers->header( 'Cache-Control'  => 'no-cache' );
+        $c->res->headers->header( 'Pragma'         => 'no-cache' );
+        return $c->render( text => $html, format => 'html' );
     }
     catch {
         $c->unhandled_exception($_);
