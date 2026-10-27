@@ -1,0 +1,22 @@
+# Smoke tests
+
+`t/smoke.t` exercises the plugin's REST API endpoints and `opac_js` output. It
+is GET-only and does not modify plugin configuration or patron/item data; it
+skips cleanly if the plugin is not installed.
+
+## Requirements
+
+- The plugin is installed and enabled in the target Koha instance.
+- `KOHA_CONF` points to the instance's `koha-conf.xml`.
+
+## Run
+
+    KOHA_CONF=/etc/koha/sites/<instance>/koha-conf.xml \
+    PERL5LIB=/usr/share/koha/lib \
+    prove -I/var/lib/koha/<instance>/plugins t/smoke.t
+
+Or run the test directly:
+
+    KOHA_CONF=/etc/koha/sites/<instance>/koha-conf.xml \
+    PERL5LIB=/usr/share/koha/lib \
+    perl -I/var/lib/koha/<instance>/plugins t/smoke.t
