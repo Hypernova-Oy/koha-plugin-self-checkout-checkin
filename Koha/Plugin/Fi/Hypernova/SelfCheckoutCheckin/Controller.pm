@@ -94,6 +94,14 @@ sub template {
             return $c->redirect_to('/cgi-bin/koha/opac-main.pl');
         }
 
+        # Mirror the native self-checkout page (sco-main.pl): the combined page
+        # auto-logs in via the SCO account, so it must honour the same IP
+        # restriction as the self-checkout module.
+        unless ( C4::Auth::in_iprange( C4::Context->preference('SelfCheckAllowByIPRanges') ) ) {
+            $c->app->log->warn('User (' . $ENV{'REMOTE_ADDR'} . ') not allowed to access SCC');
+            return $c->redirect_to('/cgi-bin/koha/opac-main.pl');
+        }
+
         # Mark this as a self-checkout session so Koha performs the SCO
         # auto-login (AutoSelfCheckAllowed) and checks the self-checkout
         # permission, instead of bouncing to the OPAC login page when the

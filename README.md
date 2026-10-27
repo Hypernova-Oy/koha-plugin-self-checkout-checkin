@@ -38,12 +38,17 @@ Download the latest _.kpz_ file from the _Project / Releases_ page
 
 1. Enable `SelfCheckInModule`
 2. Enable `AutoSelfCheckAllowed`, set `AutoSelfCheckID` and `AutoSelfCheckPass`
+3. Optionally set `SelfCheckAllowByIPRanges` to restrict which IP addresses can open the combined self checkout & check-in page
 
 ## Usage
 
 After installation and configuration, navigate to
 
 `https://yourkoha/api/v1/contrib/hypernova/scc`
+
+The combined page auto-logs in using the `AutoSelfCheckID` / `AutoSelfCheckPass`
+account and is IP-restricted by the `SelfCheckAllowByIPRanges` system preference,
+the same way the native self checkout page is.
 
 ## Possibly useful system preferences
 

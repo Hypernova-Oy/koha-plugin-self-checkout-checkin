@@ -53,6 +53,17 @@ subtest 'SCC page loads' => sub {
         ->content_like( qr{start-checkout|start-checkin} );
 };
 
+subtest 'SCC page respects SelfCheckAllowByIPRanges' => sub {
+    # Mirror sco-main.pl: when SelfCheckAllowByIPRanges is set and the client
+    # IP is not in the allowed range, the combined page must redirect away
+    # instead of auto-logging in.
+    local $ENV{'OVERRIDE_SYSPREF_SelfCheckAllowByIPRanges'} = '192.168.0.0/24';
+
+    $t->get_ok('/api/v1/contrib/hypernova/scc')
+        ->status_is(302)
+        ->header_is( 'Location' => '/cgi-bin/koha/opac-main.pl' );
+};
+
 subtest 'Static KioskBoard library loads' => sub {
     $t->get_ok('/api/v1/contrib/hypernova/static/kioskboard-aio-2.3.0.min.js')
         ->status_is(200)
