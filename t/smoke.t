@@ -88,17 +88,17 @@ subtest 'Self-service session reload timeout' => sub {
     my $plugin = $plugin_class->new( { enable_plugins => 1 } );
 
     # With a session timeout configured, the SCO and SCI login views reload at
-    # one third of the timeout so the auto-login refreshes the session before it
+    # 80% of the timeout so the auto-login refreshes the session before it
     # expires (the timeout preference is in seconds, the interval in ms).
-    local $ENV{'OVERRIDE_SYSPREF_timeout'} = '1800';
+    local $ENV{'OVERRIDE_SYSPREF_timeout'} = '5';
 
     my $sco = $plugin->_reload_js('sco');
     like( $sco, qr/body#sco_main/, 'SCO reload targets the SCO login screen' );
-    like( $sco, qr/location\.reload\(true\);\s*\}, 600000\)/, 'SCO reloads at timeout/3 (600000 ms)' );
+    like( $sco, qr/location\.reload\(true\);\s*\}, 4000\)/, 'SCO reloads at 80% of the timeout (4000 ms)' );
 
     my $sci = $plugin->_reload_js('sci');
     like( $sci, qr/body#sci_main/, 'SCI reload targets the SCI login screen' );
-    like( $sci, qr/location\.reload\(true\);\s*\}, 600000\)/, 'SCI reloads at timeout/3 (600000 ms)' );
+    like( $sci, qr/location\.reload\(true\);\s*\}, 4000\)/, 'SCI reloads at 80% of the timeout (4000 ms)' );
 
     # Without a timeout, no reload script is generated.
     local $ENV{'OVERRIDE_SYSPREF_timeout'} = '';

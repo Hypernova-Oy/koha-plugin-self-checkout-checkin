@@ -96,7 +96,9 @@ sub _reload_js {
     my ( $self, $page ) = @_;
 
     my $timeout_seconds = C4::Context->preference('timeout') || 0;
-    my $reload_ms = $timeout_seconds > 0 ? int( $timeout_seconds * 1000 / 3 ) : 0;
+    # Reload at 80% of the session timeout (seconds -> milliseconds) so the
+    # auto-login refreshes the session before Koha expires it.
+    my $reload_ms = $timeout_seconds > 0 ? int( $timeout_seconds * 800 ) : 0;
     return '' unless $reload_ms > 0;
 
     my $body_id = $page eq 'sci' ? 'body#sci_main' : 'body#sco_main';
