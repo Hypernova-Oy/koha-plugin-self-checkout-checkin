@@ -43,6 +43,10 @@ our $metadata = {
 # being injected into the SCOUserJS system preference.
 our $KIOSKBOARD_FILE = 'kioskboard-aio-2.3.0.min.js';
 
+# Default key rows (English QWERTY) used when the administrator has not entered
+# a custom "Custom keys" JSON. Matches KioskBoard's own English layout.
+our $KIOSKBOARD_DEFAULT_KEYS = '[{"0":"Q","1":"W","2":"E","3":"R","4":"T","5":"Y","6":"U","7":"I","8":"O","9":"P"},{"0":"A","1":"S","2":"D","3":"F","4":"G","5":"H","6":"J","7":"K","8":"L"},{"0":"Z","1":"X","2":"C","3":"V","4":"B","5":"N","6":"M"}]';
+
 sub new {
     my ( $class, $args ) = @_;
 
@@ -129,10 +133,33 @@ sub _kioskboard_js {
     $layout = 'numpad' unless $valid_layouts{$layout};
 
     my $keys_json  = $self->retrieve_data('kioskboard_keys_json') || '';
-    my $keys_array = '[{"0":"0","1":"1"}]';
+    my $keys_array = $KIOSKBOARD_DEFAULT_KEYS;
     if ( $keys_json =~ /\S/ ) {
         my $decoded = eval { decode_json($keys_json) };
         $keys_array = $keys_json if $decoded && ref($decoded) eq 'ARRAY';
+    }
+
+    # Action-key visibility (Caps/Shift, Space, Backspace, Enter). KioskBoard's
+    # own CSS is scoped to the "#KioskBoard-VirtualKeyboard" ID, which beats
+    # plain class selectors, so our overrides repeat that ID and use !important.
+    my $show_space     = $self->retrieve_data('kioskboard_key_space') // 0;
+    my $show_caps      = $self->retrieve_data('kioskboard_key_caps')  // 0;
+    my $show_backspace = $self->retrieve_data('kioskboard_key_backspace') // 0;
+    my $show_enter     = $self->retrieve_data('kioskboard_key_enter') // 1;
+
+    my @css_rules;
+    push @css_rules, '#KioskBoard-VirtualKeyboard .kioskboard-key-space { display: none !important; }'     unless $show_space;
+    push @css_rules, '#KioskBoard-VirtualKeyboard .kioskboard-key-capslock { display: none !important; }'  unless $show_caps;
+    push @css_rules, '#KioskBoard-VirtualKeyboard .kioskboard-key-backspace { display: none !important; }' unless $show_backspace;
+    push @css_rules, '#KioskBoard-VirtualKeyboard .kioskboard-key-enter { flex-grow: 2 !important; }'      if $show_enter;
+
+    my $css_injection = '';
+    if (@css_rules) {
+        my $css_text = join ' ', @css_rules;
+        $css_injection =
+            "        var sccStyle = document.createElement('style');\n" .
+            "        sccStyle.textContent = '$css_text';\n" .
+            "        document.head.appendChild(sccStyle);\n";
     }
 
     my $selector_list = join ', ', @selectors;
@@ -146,9 +173,24 @@ if (typeof KioskBoard !== 'undefined') {
             input.setAttribute('data-kioskboard-type', '$layout');
             input.setAttribute('data-kioskboard-placement', 'bottom');
         });
-        KioskBoard.init({
+        var sccCurrentInput = null;
+        document.addEventListener('focusin', function (e) {
+            if (e.target && e.target.classList && e.target.classList.contains('js-kioskboard-input')) {
+                sccCurrentInput = e.target;
+            }
+        });
+$css_injection        KioskBoard.init({
             theme: '$theme',
-            keysArrayOfObjects: $keys_array
+            keysArrayOfObjects: $keys_array,
+            keysEnterCallback: function () {
+                if (sccCurrentInput && sccCurrentInput.form) {
+                    if (typeof sccCurrentInput.form.requestSubmit === 'function') {
+                        sccCurrentInput.form.requestSubmit();
+                    } else {
+                        sccCurrentInput.form.submit();
+                    }
+                }
+            }
         });
         KioskBoard.run('$selector_list');
     }
@@ -210,6 +252,11 @@ sub configure {
             kioskboard_theme           => $self->retrieve_data('kioskboard_theme') || 'light',
             kioskboard_layout          => $self->retrieve_data('kioskboard_layout') || 'numpad',
             kioskboard_keys_json       => $self->retrieve_data('kioskboard_keys_json') || '',
+            kioskboard_default_keys    => $KIOSKBOARD_DEFAULT_KEYS,
+            kioskboard_key_space       => $self->retrieve_data('kioskboard_key_space') // 0,
+            kioskboard_key_caps        => $self->retrieve_data('kioskboard_key_caps')  // 0,
+            kioskboard_key_backspace   => $self->retrieve_data('kioskboard_key_backspace') // 0,
+            kioskboard_key_enter       => $self->retrieve_data('kioskboard_key_enter') // 1,
             kioskboard_field_patronid  => $self->retrieve_data('kioskboard_field_patronid') ? 1 : 0,
             kioskboard_field_patronlogin => $self->retrieve_data('kioskboard_field_patronlogin') ? 1 : 0,
             kioskboard_field_patronpw  => $self->retrieve_data('kioskboard_field_patronpw') // 1,
@@ -229,6 +276,10 @@ sub configure {
             kioskboard_theme           => scalar $cgi->param('kioskboard_theme') || 'light',
             kioskboard_layout          => scalar $cgi->param('kioskboard_layout') || 'numpad',
             kioskboard_keys_json       => scalar $cgi->param('kioskboard_keys_json') || '',
+            kioskboard_key_space       => $cgi->param('kioskboard_key_space') ? 1 : 0,
+            kioskboard_key_caps        => $cgi->param('kioskboard_key_caps') ? 1 : 0,
+            kioskboard_key_backspace   => $cgi->param('kioskboard_key_backspace') ? 1 : 0,
+            kioskboard_key_enter       => $cgi->param('kioskboard_key_enter') ? 1 : 0,
             kioskboard_field_patronid  => $cgi->param('kioskboard_field_patronid') ? 1 : 0,
             kioskboard_field_patronlogin => $cgi->param('kioskboard_field_patronlogin') ? 1 : 0,
             kioskboard_field_patronpw  => $cgi->param('kioskboard_field_patronpw') ? 1 : 0,

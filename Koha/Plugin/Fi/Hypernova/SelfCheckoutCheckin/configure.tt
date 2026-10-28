@@ -151,8 +151,16 @@
         <p>
         <label for="kioskboard_keys_json">Custom keys (JSON, optional): </label>
         <textarea name="kioskboard_keys_json" rows="4" cols="60">[% kioskboard_keys_json %]</textarea>
-        <br /><small>Overrides the layout. Format: [{"0":"A","1":"B"}, ...]. Special keys: Backspace, Enter, Caps, Space.</small>
+        <br /><small>Overrides the layout's letter/number rows. Format: [{"0":"A","1":"B"}, ...]. Pressing Enter submits the form.</small>
         </p>
+
+        <p>Action keys shown on the keyboard:</p>
+        <ul>
+            <li><label><input type="checkbox" name="kioskboard_key_space" value="1" [% IF kioskboard_key_space %]checked="checked"[% END %] /> Space</label></li>
+            <li><label><input type="checkbox" name="kioskboard_key_caps" value="1" [% IF kioskboard_key_caps %]checked="checked"[% END %] /> Shift / Caps Lock</label></li>
+            <li><label><input type="checkbox" name="kioskboard_key_backspace" value="1" [% IF kioskboard_key_backspace %]checked="checked"[% END %] /> Backspace</label></li>
+            <li><label><input type="checkbox" name="kioskboard_key_enter" value="1" [% IF kioskboard_key_enter %]checked="checked"[% END %] /> Enter (enlarged)</label></li>
+        </ul>
 
         <p>Enable the keyboard on these fields:</p>
         <ul>
@@ -165,13 +173,19 @@
         <p>
         <label>Test KioskBoard virtual keyboard:</label><br />
         <input type="text" class="js-kioskboard-input" data-kioskboard-type="[% kioskboard_layout %]" data-kioskboard-placement="bottom" id="kioskboard_test_input" value="" placeholder="Click here to test the virtual keyboard" />
+        <style>
+        [% IF !kioskboard_key_space %]#KioskBoard-VirtualKeyboard .kioskboard-key-space { display: none !important; }[% END %]
+        [% IF !kioskboard_key_caps %]#KioskBoard-VirtualKeyboard .kioskboard-key-capslock { display: none !important; }[% END %]
+        [% IF !kioskboard_key_backspace %]#KioskBoard-VirtualKeyboard .kioskboard-key-backspace { display: none !important; }[% END %]
+        [% IF kioskboard_key_enter %]#KioskBoard-VirtualKeyboard .kioskboard-key-enter { flex-grow: 2 !important; }[% END %]
+        </style>
         <script src="[% kioskboard_url %]"></script>
         <script>
         // Initialize KioskBoard for test input
         if (typeof KioskBoard !== 'undefined') {
             KioskBoard.init({
                 theme: '[% kioskboard_theme %]',
-                keysArrayOfObjects: [% IF kioskboard_keys_json %][% kioskboard_keys_json %][% ELSE %][{"0":"0","1":"1"}][% END %]
+                keysArrayOfObjects: [% IF kioskboard_keys_json %][% kioskboard_keys_json %][% ELSE %][% kioskboard_default_keys %][% END %]
             });
             KioskBoard.run(document.getElementById('kioskboard_test_input'));
         }

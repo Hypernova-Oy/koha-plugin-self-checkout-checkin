@@ -133,9 +133,21 @@ $.each($("#sci_bcheckins_table").find('td'), function() { if (new RegExp('Kirja 
 ## Virtual keyboard (KioskBoard)
 
 Enable the *virtual keyboard* checkbox in the plugin configuration to load the
-bundled KioskBoard library on the self checkout login screen. The library is
-served from a cacheable REST API endpoint and is only loaded on the pages that
-need it.
+bundled KioskBoard library on the self checkout and self check-in screens. The
+library is served from a cacheable REST API endpoint and is only loaded on the
+pages that need it.
+
+Configuration:
+
+- **Keyboard layout**: `all`, `keyboard`, or `numpad`.
+- **Custom keys** (optional JSON): overrides the letter/number rows. Format:
+  `[{"0":"A","1":"B"}, ...]` — each object is one row of keys. When left empty,
+  an English QWERTY layout is used as the default.
+- The action keys (Enter, Backspace, Space, Caps/Shift) are built into KioskBoard
+  and can be shown or hidden individually from the plugin configuration (Space,
+  Shift/Caps Lock and Backspace are hidden by default). When shown, the Enter key
+  is enlarged (`flex-grow: 2`); pressing Enter submits the form.
+- **Keyboard theme**: `light`, `dark`, `flat`, `material`, or `oldschool`.
 
 ## Security note
 
