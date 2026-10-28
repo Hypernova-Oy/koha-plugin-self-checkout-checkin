@@ -84,6 +84,23 @@ subtest 'opac_js on the SCO screen' => sub {
     like( $js, qr{opac/sco/js/scc\.js}, 'loads scc.js from the sco bundle path' );
 };
 
+subtest 'SCO session reload timeout' => sub {
+    my $plugin = $plugin_class->new( { enable_plugins => 1 } );
+
+    # With a session timeout configured, the SCO login view reloads at one
+    # third of the timeout so the auto-login refreshes the session before it
+    # expires (the timeout preference is in seconds, the interval in ms).
+    local $ENV{'OVERRIDE_SYSPREF_timeout'} = '1800';
+    my $js = $plugin->_sco_reload_js();
+    like( $js, qr/location\.reload\(true\);\s*\}, 600000\)/,
+        'reloads the SCO login view at timeout/3 (600000 ms)' );
+
+    # Without a timeout, no reload script is generated.
+    local $ENV{'OVERRIDE_SYSPREF_timeout'} = '';
+    $js = $plugin->_sco_reload_js();
+    is( $js, '', 'no reload script when the timeout preference is unset' );
+};
+
 subtest 'opac_js on the SCI screen' => sub {
     my $plugin = $plugin_class->new( { enable_plugins => 1 } );
     local $ENV{'SCRIPT_NAME'} = '/cgi-bin/koha/sci/sci-main.pl';

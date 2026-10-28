@@ -132,7 +132,12 @@ sub _kioskboard_js {
     my $layout = $self->retrieve_data('kioskboard_layout');
     $layout = 'numpad' unless $valid_layouts{$layout};
 
-    my $keys_json  = $self->retrieve_data('kioskboard_keys_json') || '';
+    my $keys_json = $self->retrieve_data('kioskboard_keys_json') || '';
+    # The JSON is entered in a <textarea> and may use CRLF line endings and a
+    # trailing comma, both of which Mojo::JSON's decode_json rejects. Normalize
+    # before parsing.
+    $keys_json =~ s/\r\n?/\n/g;
+    $keys_json =~ s/,\s*([\]}])/$1/g;
     my $keys_array = $KIOSKBOARD_DEFAULT_KEYS;
     if ( $keys_json =~ /\S/ ) {
         my $decoded = eval { decode_json($keys_json) };

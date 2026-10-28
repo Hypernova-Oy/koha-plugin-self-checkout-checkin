@@ -102,6 +102,17 @@ sub template {
             return $c->redirect_to('/cgi-bin/koha/opac-main.pl');
         }
 
+        # The combined page depends on Koha's SCO auto-login. When it is not
+        # configured there is no session to render, and C4::Auth would call
+        # exit() (crashing the Plack worker and producing a proxy error), so
+        # redirect to the native SCO login screen instead.
+        if (    !C4::Context->preference('AutoSelfCheckAllowed')
+            || ( C4::Context->preference('AutoSelfCheckID') // '' ) eq ''
+            || ( C4::Context->preference('AutoSelfCheckPass') // '' ) eq '' )
+        {
+            return $c->redirect_to('/cgi-bin/koha/sco/sco-main.pl');
+        }
+
         # Mark this as a self-checkout session so Koha performs the SCO
         # auto-login (AutoSelfCheckAllowed) and checks the self-checkout
         # permission, instead of bouncing to the OPAC login page when the

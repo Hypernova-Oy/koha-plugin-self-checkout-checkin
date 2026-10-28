@@ -124,12 +124,12 @@
 
         <p>
         <label for="enable_virtual_keyboard">
-            <input name="enable_virtual_keyboard" value="1" type="checkbox" [% IF enable_virtual_keyboard %]checked="checked"[% END %] />
+            <input name="enable_virtual_keyboard" value="1" type="checkbox" id="enable_virtual_keyboard" [% IF enable_virtual_keyboard %]checked="checked"[% END %] />
             Enable virtual keyboard (KioskBoard)
         </label>
         </p>
 
-        [% IF ( enable_virtual_keyboard ) %]
+        <div id="kioskboard_config" [% IF !enable_virtual_keyboard %]style="display:none"[% END %]>
         <p>
         <label for="kioskboard_theme">Keyboard theme: </label>
         <select name="kioskboard_theme">
@@ -173,7 +173,7 @@
         <p>
         <label>Test KioskBoard virtual keyboard:</label><br />
         <input type="text" class="js-kioskboard-input" data-kioskboard-type="[% kioskboard_layout %]" data-kioskboard-placement="bottom" id="kioskboard_test_input" value="" placeholder="Click here to test the virtual keyboard" />
-        <style>
+        <style id="kioskboard_preview_style">
         [% IF !kioskboard_key_space %]#KioskBoard-VirtualKeyboard .kioskboard-key-space { display: none !important; }[% END %]
         [% IF !kioskboard_key_caps %]#KioskBoard-VirtualKeyboard .kioskboard-key-capslock { display: none !important; }[% END %]
         [% IF !kioskboard_key_backspace %]#KioskBoard-VirtualKeyboard .kioskboard-key-backspace { display: none !important; }[% END %]
@@ -181,17 +181,83 @@
         </style>
         <script src="[% kioskboard_url %]"></script>
         <script>
-        // Initialize KioskBoard for test input
-        if (typeof KioskBoard !== 'undefined') {
-            KioskBoard.init({
-                theme: '[% kioskboard_theme %]',
-                keysArrayOfObjects: [% IF kioskboard_keys_json %][% kioskboard_keys_json %][% ELSE %][% kioskboard_default_keys %][% END %]
-            });
-            KioskBoard.run(document.getElementById('kioskboard_test_input'));
+        var kioskboardDefaultKeys = [% kioskboard_default_keys %];
+
+        function kioskboardPreviewCss() {
+            var rules = [];
+            if (!document.querySelector('input[name="kioskboard_key_space"]').checked) {
+                rules.push('#KioskBoard-VirtualKeyboard .kioskboard-key-space { display: none !important; }');
+            }
+            if (!document.querySelector('input[name="kioskboard_key_caps"]').checked) {
+                rules.push('#KioskBoard-VirtualKeyboard .kioskboard-key-capslock { display: none !important; }');
+            }
+            if (!document.querySelector('input[name="kioskboard_key_backspace"]').checked) {
+                rules.push('#KioskBoard-VirtualKeyboard .kioskboard-key-backspace { display: none !important; }');
+            }
+            if (document.querySelector('input[name="kioskboard_key_enter"]').checked) {
+                rules.push('#KioskBoard-VirtualKeyboard .kioskboard-key-enter { flex-grow: 2 !important; }');
+            }
+            return rules.join(' ');
         }
+
+        function kioskboardPreviewKeys() {
+            var raw = document.querySelector('textarea[name="kioskboard_keys_json"]').value.trim();
+            if (raw) {
+                try {
+                    raw = raw.replace(/\r\n?/g, '\n').replace(/,\s*([\]}])/g, '$1');
+                    var parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        return parsed;
+                    }
+                } catch (e) { /* invalid JSON: fall back to the defaults */ }
+            }
+            return kioskboardDefaultKeys;
+        }
+
+        function kioskboardRefreshPreview() {
+            if (typeof KioskBoard === 'undefined') return;
+
+            var layout = document.querySelector('select[name="kioskboard_layout"]').value;
+            var theme  = document.querySelector('select[name="kioskboard_theme"]').value;
+
+            document.getElementById('kioskboard_preview_style').textContent = kioskboardPreviewCss();
+
+            // Replace the test input with a fresh element so KioskBoard does not
+            // stack focus listeners on every configuration change.
+            var oldInput = document.getElementById('kioskboard_test_input');
+            var newInput = oldInput.cloneNode(false);
+            newInput.value = '';
+            newInput.removeAttribute('readonly');
+            oldInput.parentNode.replaceChild(newInput, oldInput);
+            newInput.setAttribute('data-kioskboard-type', layout);
+            newInput.setAttribute('data-kioskboard-placement', 'bottom');
+
+            KioskBoard.init({
+                theme: theme,
+                keysArrayOfObjects: kioskboardPreviewKeys()
+            });
+            KioskBoard.run(newInput);
+        }
+
+        // Toggle the KioskBoard configuration section without submitting the form.
+        document.getElementById('enable_virtual_keyboard').addEventListener('change', function () {
+            document.getElementById('kioskboard_config').style.display = this.checked ? '' : 'none';
+        });
+
+        // Reload the test keyboard preview whenever a configuration changes.
+        ['kioskboard_theme', 'kioskboard_layout'].forEach(function (name) {
+            document.querySelector('select[name="' + name + '"]').addEventListener('change', kioskboardRefreshPreview);
+        });
+        document.querySelector('textarea[name="kioskboard_keys_json"]').addEventListener('input', kioskboardRefreshPreview);
+        ['kioskboard_key_space', 'kioskboard_key_caps', 'kioskboard_key_backspace', 'kioskboard_key_enter'].forEach(function (name) {
+            document.querySelector('input[name="' + name + '"]').addEventListener('change', kioskboardRefreshPreview);
+        });
+
+        // Initial render.
+        kioskboardRefreshPreview();
         </script>
         </p>
-        [% END %]
+        </div>
 
         <p>
         <input type="hidden" name="save" value="1" />
