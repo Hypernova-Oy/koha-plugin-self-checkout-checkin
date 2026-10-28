@@ -82,6 +82,7 @@ subtest 'opac_js on the SCO screen' => sub {
     local $ENV{'SCRIPT_NAME'} = '/cgi-bin/koha/sco/sco-main.pl';
     my $js = $plugin->opac_js;
     like( $js, qr{opac/sco/js/scc\.js}, 'loads scc.js from the sco bundle path' );
+    like( $js, qr{body#sco_main #barcode}, 'binds KioskBoard to the SCO checkout barcode field' );
 };
 
 subtest 'Self-service session reload timeout' => sub {

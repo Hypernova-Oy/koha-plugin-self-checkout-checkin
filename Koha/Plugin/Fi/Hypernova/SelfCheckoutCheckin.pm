@@ -153,6 +153,7 @@ sub _kioskboard_js {
         push @selectors, 'body#sco_main input#patronid'    if $self->retrieve_data('kioskboard_field_patronid');
         push @selectors, 'body#sco_main input#patronlogin' if $self->retrieve_data('kioskboard_field_patronlogin');
         push @selectors, 'body#sco_main input#patronpw'    if $self->retrieve_data('kioskboard_field_patronpw') // 1;
+        push @selectors, 'body#sco_main #barcode'          if $self->retrieve_data('kioskboard_field_sco_barcode') // 1;
     }
     else {
         push @selectors, 'body#sci_main input#barcode_input' if $self->retrieve_data('kioskboard_field_barcode') // 1;
@@ -303,6 +304,7 @@ sub configure {
             kioskboard_field_patronlogin => $self->retrieve_data('kioskboard_field_patronlogin') ? 1 : 0,
             kioskboard_field_patronpw  => $self->retrieve_data('kioskboard_field_patronpw') // 1,
             kioskboard_field_barcode   => $self->retrieve_data('kioskboard_field_barcode') // 1,
+            kioskboard_field_sco_barcode => $self->retrieve_data('kioskboard_field_sco_barcode') // 1,
             diagnostics                => $self->_run_diagnostics(),
         );
 
@@ -326,6 +328,7 @@ sub configure {
             kioskboard_field_patronlogin => $cgi->param('kioskboard_field_patronlogin') ? 1 : 0,
             kioskboard_field_patronpw  => $cgi->param('kioskboard_field_patronpw') ? 1 : 0,
             kioskboard_field_barcode   => $cgi->param('kioskboard_field_barcode') ? 1 : 0,
+            kioskboard_field_sco_barcode => $cgi->param('kioskboard_field_sco_barcode') ? 1 : 0,
         };
 
         # Only overwrite the stored password when a new value is submitted.
