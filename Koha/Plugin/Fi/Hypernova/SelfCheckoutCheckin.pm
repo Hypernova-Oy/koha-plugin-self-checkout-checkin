@@ -70,18 +70,17 @@ sub opac_js {
     my $path = $ENV{'SCRIPT_NAME'} // $ENV{'REQUEST_URI'} // '';
     return '' unless $path =~ m{(?:sco/sco-main\.pl|sci/sci-main\.pl)};
 
+    my $page = $path =~ m{sci/sci-main\.pl} ? 'sci' : 'sco';
+
     my $js = '<script src="' . $self->get_plugin_http_path() . '/opac/sco/js/scc.js"></script>';
 
-    if ( $path =~ m{sco/sco-main\.pl} ) {
-        # Periodically reload the SCO login screen: the AutoSelfCheckAllowed
-        # session is not refreshed after the 'timeout' system preference.
-        my $reload_js = $self->_sco_reload_js();
-        $js .= "\n" . '<script>' . $reload_js . '</script>' if $reload_js;
-    }
+    # Periodically reload the self-service login screen so the auto-login
+    # refreshes the session before the 'timeout' system preference expires it.
+    my $reload_js = $self->_reload_js($page);
+    $js .= "\n" . '<script>' . $reload_js . '</script>' if $reload_js;
 
     # The KioskBoard virtual keyboard is available on both the SCO and SCI screens.
     if ( $self->retrieve_data('enable_virtual_keyboard') ) {
-        my $page = $path =~ m{sci/sci-main\.pl} ? 'sci' : 'sco';
         my $kioskboard_js = $self->_kioskboard_js($page);
         if ($kioskboard_js) {
             my $kioskboard_url = '/api/v1/contrib/' . $self->api_namespace . '/static/' . $KIOSKBOARD_FILE;
@@ -93,17 +92,19 @@ sub opac_js {
     return $js;
 }
 
-sub _sco_reload_js {
-    my ( $self ) = @_;
+sub _reload_js {
+    my ( $self, $page ) = @_;
 
     my $timeout_seconds = C4::Context->preference('timeout') || 0;
     my $reload_ms = $timeout_seconds > 0 ? int( $timeout_seconds * 1000 / 3 ) : 0;
     return '' unless $reload_ms > 0;
 
+    my $body_id = $page eq 'sci' ? 'body#sci_main' : 'body#sco_main';
+
     return <<"END_JS";
-// Reload the SCO login screen periodically, because the 'AutoSelfCheckAllowed'
-// system preference fails to refresh the session after the 'timeout' preference.
-if (document.querySelector('body#sco_main')) {
+// Reload the self-service login screen periodically, because the auto-login
+// session is not refreshed after the 'timeout' system preference.
+if (document.querySelector('$body_id')) {
     var sccReloadTimeout = setTimeout(function () { location.reload(true); }, $reload_ms);
 }
 END_JS
