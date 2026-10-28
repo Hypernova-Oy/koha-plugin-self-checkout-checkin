@@ -111,6 +111,8 @@ subtest 'opac_js on the SCI screen' => sub {
     local $ENV{'SCRIPT_NAME'} = '/cgi-bin/koha/sci/sci-main.pl';
     my $js = $plugin->opac_js;
     like( $js, qr{opac/sco/js/scc\.js}, 'loads scc.js from the sco bundle path' );
+    like( $js, qr{sci_append_button}, 'keeps the SCI OK button in sync with the barcode input' );
+    like( $js, qr{Itsepalvelupalautus}, 'corrects the Finnish self check-in heading' );
 };
 
 subtest 'opac_js is empty elsewhere' => sub {

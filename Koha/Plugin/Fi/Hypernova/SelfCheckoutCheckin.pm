@@ -79,6 +79,12 @@ sub opac_js {
     my $reload_js = $self->_reload_js($page);
     $js .= "\n" . '<script>' . $reload_js . '</script>' if $reload_js;
 
+    # SCI-specific fixes: keep the OK button in sync when the barcode is entered
+    # with the KioskBoard virtual keyboard, and correct the Finnish heading.
+    if ( $page eq 'sci' ) {
+        $js .= "\n" . '<script>' . $self->_sci_fix_js() . '</script>';
+    }
+
     # The KioskBoard virtual keyboard is available on both the SCO and SCI screens.
     if ( $self->retrieve_data('enable_virtual_keyboard') ) {
         my $kioskboard_js = $self->_kioskboard_js($page);
@@ -109,6 +115,33 @@ sub _reload_js {
 if (document.querySelector('$body_id')) {
     var sccReloadTimeout = setTimeout(function () { location.reload(true); }, $reload_ms);
 }
+END_JS
+}
+
+sub _sci_fix_js {
+    my ( $self ) = @_;
+
+    return <<'END_JS';
+// Keep the self check-in "OK" button in sync with the barcode input. The
+// KioskBoard virtual keyboard emits a "change" event (not "input"), which the
+// page's own handler does not listen for, so the button would stay disabled.
+document.addEventListener('DOMContentLoaded', function () {
+    var input = document.getElementById('barcode_input');
+    var button = document.getElementById('sci_append_button');
+    if (input && button) {
+        var sync = function () { button.disabled = (input.value.trim() === ''); };
+        input.addEventListener('change', sync);
+        input.addEventListener('input', sync);
+        sync();
+    }
+
+    // Correct the Finnish self check-in heading: Koha translates it as
+    // "Itsepalvelulainaus" (self check-out) but it should be "Itsepalvelupalautus".
+    var heading = document.querySelector('#masthead h1');
+    if (heading) {
+        heading.textContent = heading.textContent.replace('Itsepalvelulainaus', 'Itsepalvelupalautus');
+    }
+});
 END_JS
 }
 
