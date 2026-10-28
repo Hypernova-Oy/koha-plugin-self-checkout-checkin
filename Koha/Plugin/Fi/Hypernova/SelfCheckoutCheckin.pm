@@ -42,6 +42,7 @@ our $metadata = {
 # through a cacheable REST API static route (see static_routes below) instead of
 # being injected into the SCOUserJS system preference.
 our $KIOSKBOARD_FILE = 'kioskboard-aio-2.3.0.min.js';
+our $SCC_JS_FILE     = 'scc.js';
 
 # Default key rows (English QWERTY) used when the administrator has not entered
 # a custom "Custom keys" JSON. Matches KioskBoard's own English layout.
@@ -72,7 +73,7 @@ sub opac_js {
 
     my $page = $path =~ m{sci/sci-main\.pl} ? 'sci' : 'sco';
 
-    my $js = '<script src="' . $self->get_plugin_http_path() . '/opac/sco/js/scc.js"></script>';
+    my $js = '<script src="/api/v1/contrib/' . $self->api_namespace . '/static/' . $SCC_JS_FILE . '"></script>';
 
     # Periodically reload the self-service login screen so the auto-login
     # refreshes the session before the 'timeout' system preference expires it.
@@ -262,6 +263,17 @@ sub static_routes {
                 produces    => ['application/javascript'],
                 responses   => {
                     200 => { description => 'KioskBoard virtual keyboard library' },
+                },
+            },
+        },
+        "/$SCC_JS_FILE" => {
+            get => {
+                'x-mojo-to' => 'Fi::Hypernova::SelfCheckoutCheckin::Controller#scc_js',
+                operationId => 'scc_js',
+                tags        => ['scc_js'],
+                produces    => ['application/javascript'],
+                responses   => {
+                    200 => { description => 'SCC page JavaScript' },
                 },
             },
         },

@@ -81,7 +81,7 @@ subtest 'opac_js on the SCO screen' => sub {
     my $plugin = $plugin_class->new( { enable_plugins => 1 } );
     local $ENV{'SCRIPT_NAME'} = '/cgi-bin/koha/sco/sco-main.pl';
     my $js = $plugin->opac_js;
-    like( $js, qr{opac/sco/js/scc\.js}, 'loads scc.js from the sco bundle path' );
+    like( $js, qr{static/scc\.js}, 'loads scc.js from the static REST route' );
     like( $js, qr{body#sco_main #barcode}, 'binds KioskBoard to the SCO checkout barcode field' );
 };
 
@@ -111,7 +111,7 @@ subtest 'opac_js on the SCI screen' => sub {
     my $plugin = $plugin_class->new( { enable_plugins => 1 } );
     local $ENV{'SCRIPT_NAME'} = '/cgi-bin/koha/sci/sci-main.pl';
     my $js = $plugin->opac_js;
-    like( $js, qr{opac/sco/js/scc\.js}, 'loads scc.js from the sco bundle path' );
+    like( $js, qr{static/scc\.js}, 'loads scc.js from the static REST route' );
     like( $js, qr{sci_append_button}, 'keeps the SCI OK button in sync with the barcode input' );
     like( $js, qr{Itsepalvelupalautus}, 'corrects the Finnish self check-in heading' );
 };

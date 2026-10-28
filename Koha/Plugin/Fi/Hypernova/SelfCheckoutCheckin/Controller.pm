@@ -130,6 +130,7 @@ sub template {
         $template->param(
             PLUGIN_PATH => $scc_obj->get_plugin_http_path(),
             PLUGIN_DIR  => $scc_obj->bundle_path(),
+            SCC_JS_URL  => '/api/v1/contrib/' . $scc_obj->api_namespace . '/static/' . $Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin::SCC_JS_FILE,
             LANG        => $lang,
         );
 
@@ -152,6 +153,20 @@ sub kioskboard {
 
     my $scc_obj = Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin->new;
     my $file = $scc_obj->mbf_path( 'opac/js/' . $Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin::KIOSKBOARD_FILE );
+
+    return $c->render( status => 404, text => 'File not found' ) unless -f $file;
+
+    my $content = Mojo::File->new($file)->slurp;
+    $c->res->headers->cache_control('public, max-age=86400');
+    $c->res->headers->content_type('application/javascript; charset=UTF-8');
+    return $c->render( text => $content );
+}
+
+sub scc_js {
+    my $c = shift->openapi->valid_input or return;
+
+    my $scc_obj = Koha::Plugin::Fi::Hypernova::SelfCheckoutCheckin->new;
+    my $file = $scc_obj->mbf_path('opac/sco/js/scc.js');
 
     return $c->render( status => 404, text => 'File not found' ) unless -f $file;
 

@@ -79,7 +79,7 @@ h2.scc-button a.disabled {
 </div> <!-- / .main -->
 [% INCLUDE 'opac-bottom.inc' %]
 [% BLOCK jsinclude %]
-<script src="[% PLUGIN_PATH %]/opac/sco/js/scc.js"></script>
+<script src="[% SCC_JS_URL %]"></script>
 <script>
 $("a#start-checkout, a#start-checkin").click(function (event) {
     if ($(this).hasClass("disabled")) {
