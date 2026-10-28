@@ -71,6 +71,14 @@ subtest 'Static KioskBoard library loads' => sub {
         ->content_like( qr{KioskBoard} );
 };
 
+subtest 'Static scc.js loads' => sub {
+    $t->get_ok('/api/v1/contrib/hypernova/static/scc.js')
+        ->status_is(200)
+        ->header_like( 'Content-Type' => qr{application/javascript} )
+        ->content_like( qr{SCC_SCRIPT_LOCATION} )
+        ->content_like( qr{sci_finish_button} );
+};
+
 subtest 'Check-in endpoint redirects' => sub {
     $t->get_ok('/api/v1/contrib/hypernova/redirect/checkin')
         ->status_is(302)

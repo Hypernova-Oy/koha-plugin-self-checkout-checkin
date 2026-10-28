@@ -11,6 +11,12 @@ $(document).ready(function () {
         $("body#opac-login-page").html("");
         window.location.href = SCC_SCRIPT_LOCATION;
     }
+    // After finishing check-in, return to the combined self-service menu
+    // instead of the SCI barcode entry screen.
+    $("#sci_finish_button").on('click', function(e) {
+        e.preventDefault();
+        window.location.href = SCC_SCRIPT_LOCATION;
+    });
 
     if (new RegExp('(api/v1/contrib/hypernova/scc)$').exec(window.location.pathname) || new RegExp('(sco/sco-main\.pl)$').exec(window.location.pathname) || new RegExp('(sci/sci-main\.pl)$').exec(window.location.pathname)) {
         $("a[href*='opac-changelanguage.pl']").each(function() {
