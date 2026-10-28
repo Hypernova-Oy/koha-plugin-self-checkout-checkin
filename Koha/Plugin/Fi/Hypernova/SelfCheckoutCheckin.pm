@@ -159,6 +159,7 @@ sub _kioskboard_js {
     push @css_rules, '#KioskBoard-VirtualKeyboard .kioskboard-key-space { display: none !important; }'     unless $show_space;
     push @css_rules, '#KioskBoard-VirtualKeyboard .kioskboard-key-capslock { display: none !important; }'  unless $show_caps;
     push @css_rules, '#KioskBoard-VirtualKeyboard .kioskboard-key-backspace { display: none !important; }' unless $show_backspace;
+    push @css_rules, '#KioskBoard-VirtualKeyboard .kioskboard-key-enter { display: none !important; }'     unless $show_enter;
     push @css_rules, '#KioskBoard-VirtualKeyboard .kioskboard-key-enter { flex-grow: 2 !important; }'      if $show_enter;
 
     my $css_injection = '';

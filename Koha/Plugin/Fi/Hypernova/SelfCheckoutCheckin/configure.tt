@@ -177,6 +177,7 @@
         [% IF !kioskboard_key_space %]#KioskBoard-VirtualKeyboard .kioskboard-key-space { display: none !important; }[% END %]
         [% IF !kioskboard_key_caps %]#KioskBoard-VirtualKeyboard .kioskboard-key-capslock { display: none !important; }[% END %]
         [% IF !kioskboard_key_backspace %]#KioskBoard-VirtualKeyboard .kioskboard-key-backspace { display: none !important; }[% END %]
+        [% IF !kioskboard_key_enter %]#KioskBoard-VirtualKeyboard .kioskboard-key-enter { display: none !important; }[% END %]
         [% IF kioskboard_key_enter %]#KioskBoard-VirtualKeyboard .kioskboard-key-enter { flex-grow: 2 !important; }[% END %]
         </style>
         <script src="[% kioskboard_url %]"></script>
@@ -194,7 +195,9 @@
             if (!document.querySelector('input[name="kioskboard_key_backspace"]').checked) {
                 rules.push('#KioskBoard-VirtualKeyboard .kioskboard-key-backspace { display: none !important; }');
             }
-            if (document.querySelector('input[name="kioskboard_key_enter"]').checked) {
+            if (!document.querySelector('input[name="kioskboard_key_enter"]').checked) {
+                rules.push('#KioskBoard-VirtualKeyboard .kioskboard-key-enter { display: none !important; }');
+            } else {
                 rules.push('#KioskBoard-VirtualKeyboard .kioskboard-key-enter { flex-grow: 2 !important; }');
             }
             return rules.join(' ');
