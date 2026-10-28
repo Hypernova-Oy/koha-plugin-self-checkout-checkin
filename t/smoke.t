@@ -91,6 +91,7 @@ subtest 'opac_js on the SCO screen' => sub {
     my $js = $plugin->opac_js;
     like( $js, qr{static/scc\.js}, 'loads scc.js from the static REST route' );
     like( $js, qr{body#sco_main #barcode}, 'binds KioskBoard to the SCO checkout barcode field' );
+    like( $js, qr{allowRealKeyboard: true}, 'allows physical keyboard input' );
 };
 
 subtest 'Self-service session reload timeout' => sub {

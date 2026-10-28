@@ -238,7 +238,9 @@
 
             KioskBoard.init({
                 theme: theme,
-                keysArrayOfObjects: kioskboardPreviewKeys()
+                keysArrayOfObjects: kioskboardPreviewKeys(),
+                allowRealKeyboard: true,
+                allowMobileKeyboard: true
             });
             KioskBoard.run(newInput);
         }

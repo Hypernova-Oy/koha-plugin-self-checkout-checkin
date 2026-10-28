@@ -226,6 +226,8 @@ if (typeof KioskBoard !== 'undefined') {
 $css_injection        KioskBoard.init({
             theme: '$theme',
             keysArrayOfObjects: $keys_array,
+            allowRealKeyboard: true,
+            allowMobileKeyboard: true,
             keysEnterCallback: function () {
                 if (sccCurrentInput && sccCurrentInput.form) {
                     if (typeof sccCurrentInput.form.requestSubmit === 'function') {
