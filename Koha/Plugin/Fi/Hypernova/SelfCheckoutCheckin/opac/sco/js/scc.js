@@ -1,12 +1,12 @@
 var SCC_SCRIPT_LOCATION = "/api/v1/contrib/hypernova/scc";
 
 $(document).ready(function () {
-    if (new RegExp('(sco/sco-main\.pl)$')
+    if (new RegExp('(sco/sco-main\\.pl)$')
         .exec(window.location.pathname) && new RegExp('^([\?&]op=logout)$').exec(window.location.search)) {
         $("body#sco_main").html("");
         window.location.href = SCC_SCRIPT_LOCATION;
     }
-    if (new RegExp('(sci/sci-main\.pl)$')
+    if (new RegExp('(sci/sci-main\\.pl)$')
         .exec(window.location.pathname) && $("form#auth").length > 0) {
         $("body#opac-login-page").html("");
         window.location.href = SCC_SCRIPT_LOCATION;
@@ -18,7 +18,7 @@ $(document).ready(function () {
         window.location.href = SCC_SCRIPT_LOCATION;
     });
 
-    if (new RegExp('(api/v1/contrib/hypernova/scc)$').exec(window.location.pathname) || new RegExp('(sco/sco-main\.pl)$').exec(window.location.pathname) || new RegExp('(sci/sci-main\.pl)$').exec(window.location.pathname)) {
+    if (new RegExp('(api/v1/contrib/hypernova/scc)$').exec(window.location.pathname) || new RegExp('(sco/sco-main\\.pl)$').exec(window.location.pathname) || new RegExp('(sci/sci-main\\.pl)$').exec(window.location.pathname)) {
         $("a[href*='opac-changelanguage.pl']").each(function() {
             let href = $(this).attr("href");
             let new_href = href.replace('/cgi-bin/koha/opac-changelanguage.pl\?language', '/api/v1/contrib/hypernova/scc?language');
@@ -26,7 +26,7 @@ $(document).ready(function () {
         });
     }
     
-    if (new RegExp('(sco/sco-main\.pl)$').exec(window.location.pathname) || new RegExp('(sci/sci-main\.pl)$').exec(window.location.pathname)) {
+    if (new RegExp('(sco/sco-main\\.pl)$').exec(window.location.pathname) || new RegExp('(sci/sci-main\\.pl)$').exec(window.location.pathname)) {
         if (typeof SCC_HOME_BUTTON_TEXT === "undefined") {
             SCC_HOME_BUTTON_TEXT = '<<';
         }

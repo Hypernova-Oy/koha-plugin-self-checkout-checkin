@@ -19,7 +19,7 @@ use Modern::Perl;
 
 use base qw(Koha::Plugins::Base);
 
-use Mojo::JSON qw(decode_json);
+use Mojo::JSON qw(decode_json encode_json);
 use C4::Context;
 use C4::Auth;
 use Koha::Patrons;
@@ -179,7 +179,7 @@ sub _kioskboard_js {
     my $keys_array = $KIOSKBOARD_DEFAULT_KEYS;
     if ( $keys_json =~ /\S/ ) {
         my $decoded = eval { decode_json($keys_json) };
-        $keys_array = $keys_json if $decoded && ref($decoded) eq 'ARRAY';
+        $keys_array = encode_json($decoded) if $decoded && ref($decoded) eq 'ARRAY';
     }
 
     # Action-key visibility (Caps/Shift, Space, Backspace, Enter). KioskBoard's
@@ -229,6 +229,15 @@ $css_injection        KioskBoard.init({
             allowRealKeyboard: true,
             allowMobileKeyboard: true,
             keysEnterCallback: function () {
+                // On the self check-in screen the barcode must be appended via
+                // the OK button (the form is submitted later with the accumulated
+                // barcodes), so trigger that button instead of submitting an
+                // empty check-in. Elsewhere submit the containing form.
+                var sciOk = document.getElementById('sci_append_button');
+                if (sciOk) {
+                    sciOk.click();
+                    return;
+                }
                 if (sccCurrentInput && sccCurrentInput.form) {
                     if (typeof sccCurrentInput.form.requestSubmit === 'function') {
                         sccCurrentInput.form.requestSubmit();

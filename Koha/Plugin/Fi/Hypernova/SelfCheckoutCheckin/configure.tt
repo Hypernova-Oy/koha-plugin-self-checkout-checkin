@@ -254,7 +254,11 @@
         ['kioskboard_theme', 'kioskboard_layout'].forEach(function (name) {
             document.querySelector('select[name="' + name + '"]').addEventListener('change', kioskboardRefreshPreview);
         });
-        document.querySelector('textarea[name="kioskboard_keys_json"]').addEventListener('input', kioskboardRefreshPreview);
+        var kioskboardTextareaTimer = null;
+        document.querySelector('textarea[name="kioskboard_keys_json"]').addEventListener('input', function () {
+            clearTimeout(kioskboardTextareaTimer);
+            kioskboardTextareaTimer = setTimeout(kioskboardRefreshPreview, 300);
+        });
         ['kioskboard_key_space', 'kioskboard_key_caps', 'kioskboard_key_backspace', 'kioskboard_key_enter'].forEach(function (name) {
             document.querySelector('input[name="' + name + '"]').addEventListener('change', kioskboardRefreshPreview);
         });
