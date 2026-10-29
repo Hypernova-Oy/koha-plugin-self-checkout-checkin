@@ -164,10 +164,10 @@ sub _kioskboard_js {
     my %valid_themes  = map { $_ => 1 } qw( light dark flat material oldschool );
     my %valid_layouts = map { $_ => 1 } qw( all keyboard numpad );
 
-    my $theme = $self->retrieve_data('kioskboard_theme');
+    my $theme = $self->retrieve_data('kioskboard_theme') || '';
     $theme = 'light' unless $valid_themes{$theme};
 
-    my $layout = $self->retrieve_data('kioskboard_layout');
+    my $layout = $self->retrieve_data('kioskboard_layout') || '';
     $layout = 'numpad' unless $valid_layouts{$layout};
 
     my $keys_json = $self->retrieve_data('kioskboard_keys_json') || '';
